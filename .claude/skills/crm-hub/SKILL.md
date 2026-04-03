@@ -18,6 +18,10 @@ Use this skill when the user wants to:
 - Analyze past post performance and get AI-powered suggestions
 - Schedule and publish content across all social platforms
 - Build content themes, series, and batched content plans
+- Build a lead generation engine with target profiling
+- Scrape and enrich leads from web sources
+- Analyze existing contacts and campaigns to find more leads like your best customers
+- Push scraped leads into ad campaigns and email sequences automatically
 
 ## Architecture Overview
 
@@ -367,6 +371,280 @@ Connect social content to the rest of the CRM:
 
 ---
 
+## Module 7: Intelligent Lead Generation Engine
+
+An AI-powered lead generation system that interviews the user to build a deep target profile, analyzes existing CRM and campaign data to find patterns, determines the best scraping strategy, finds leads, enriches them, scores them, and pushes them directly into ad campaigns, email sequences, and the deal pipeline.
+
+### 7.1 Target Discovery Interview
+
+When the user says "find me leads" or "I need more customers", Claude runs an interactive interview. Ask these questions in a conversational flow — skip questions the CRM already has data for:
+
+#### Business & Offer Questions
+1. **What do you sell?** — product/service, price point, delivery model
+2. **What problem do you solve?** — the pain point, the before/after transformation
+3. **What's your unique value?** — why you vs competitors
+4. **What's your sales cycle?** — how long from first contact to close
+5. **What's your average deal size?** — revenue per customer
+6. **What's your max cost per lead?** — how much can you spend to acquire one lead
+
+#### Ideal Customer Profile (ICP) Questions
+7. **Industry/vertical?** — e.g., SaaS, e-commerce, healthcare, real estate, restaurants
+8. **Company size?** — solo, 1-10, 11-50, 51-200, 201-1000, 1000+
+9. **Revenue range?** — $0-100K, $100K-1M, $1M-10M, $10M-100M, $100M+
+10. **Job titles of decision-makers?** — CEO, CMO, VP Marketing, Head of Sales, Owner
+11. **Geography?** — countries, states, cities, radius from a location
+12. **Tech stack?** — what tools/software do they use (e.g., Shopify, HubSpot, WordPress)
+13. **Funding stage?** — bootstrapped, seed, Series A-C, public (for B2B SaaS)
+14. **Hiring signals?** — are they growing? Hiring for specific roles?
+15. **Online presence?** — do they have a website, social media, online reviews
+
+#### Behavioral & Psychographic Questions
+16. **Where do they hang out online?** — LinkedIn groups, Facebook groups, Reddit, forums, Slack communities, Discord
+17. **What content do they consume?** — podcasts, newsletters, YouTube channels, blogs
+18. **What events do they attend?** — conferences, trade shows, webinars
+19. **What triggers a purchase?** — new funding, new hire, product launch, pain event, seasonal
+20. **What objections do they have?** — price, trust, timing, complexity
+21. **Who are your best customers?** — name 3-5 existing customers so we can find more like them
+
+#### Competitor & Market Questions
+22. **Who are your competitors?** — direct and indirect
+23. **What are competitors doing for lead gen?** — ads, content, cold outreach, events
+24. **What have you tried before?** — what worked, what didn't, and why
+
+### 7.2 CRM Data Analysis (AI-Powered Suggestions)
+
+Before scraping, Claude analyzes your existing data to find patterns and make suggestions:
+
+#### Contact Analysis
+- **Best customer profile**: analyze your top 20% of customers by revenue — what do they have in common? (industry, company size, source, job title, geography)
+- **Fastest closers**: which leads converted quickest? What traits do they share?
+- **Highest LTV**: which customers have the highest lifetime value? Find more like them
+- **Source analysis**: which lead sources (organic, paid, referral, cold email) produce the best customers?
+- **Lost deal patterns**: why did deals fail? Avoid targeting similar profiles
+- **Seasonal patterns**: when do leads convert best? Time scraping campaigns accordingly
+
+#### Ad Campaign Analysis
+- **Top-performing audiences**: which ad audiences convert best? Mirror them in scraping
+- **Best-performing keywords**: what search terms bring high-quality leads? Use them for scraping queries
+- **Geographic hotspots**: which locations produce the most revenue per lead?
+- **Creative insights**: what messaging resonates? Use it in outreach to scraped leads
+- **Lookalike signals**: which traits do your ad-converted leads share that we can search for?
+
+#### AI Suggestions Output
+Claude presents findings like:
+> "Based on your CRM data, your best customers are:
+> - SaaS companies with 20-100 employees
+> - Located in Austin, Denver, and Nashville
+> - Using Shopify + Klaviyo
+> - Founded in the last 3 years
+> - The CEO or Head of Marketing is your buyer
+> - They typically close within 14 days
+> - Average deal value: $8,500
+> 
+> I recommend targeting 500 companies matching this profile. Here's my scraping plan..."
+
+### 7.3 Scraping Strategy Engine
+
+Based on the target profile, Claude designs a custom scraping strategy using the best sources for each data type:
+
+#### Source Selection Matrix
+
+| Data Needed | Primary Source | Secondary Source | Method |
+|-------------|---------------|-----------------|--------|
+| Company names & info | LinkedIn Sales Navigator | Crunchbase, Apollo | API + scraping |
+| Decision-maker names | LinkedIn | Company websites ("About" pages) | API + scraping |
+| Email addresses | Hunter.io, Apollo.io | Snov.io, FindThatLead | API enrichment |
+| Phone numbers | Apollo.io, Lusha | ZoomInfo, RocketReach | API enrichment |
+| Tech stack | BuiltWith, Wappalyzer | SimilarTech | API |
+| Company revenue/size | Crunchbase, Apollo | LinkedIn, D&B | API |
+| Funding data | Crunchbase, PitchBook | TechCrunch, AngelList | API + scraping |
+| Hiring signals | LinkedIn Jobs, Indeed | Glassdoor, company careers pages | Scraping |
+| Social media profiles | Company websites | Google search | Scraping |
+| Reviews/reputation | G2, Capterra, Yelp, Google | Trustpilot, BBB | Scraping |
+| Website traffic | SimilarWeb, SEMrush | Ahrefs | API |
+| Intent signals | Bombora, G2 Buyer Intent | 6sense | API |
+| Local businesses | Google Maps, Yelp | Yellow Pages, BBB | API + scraping |
+| E-commerce stores | Shopify store list, BuiltWith | Myip.ms | Scraping |
+| Event attendees | Eventbrite, Meetup | Conference websites | Scraping |
+| Community members | Facebook Groups, Reddit, Slack | Discord, forums | Scraping |
+| Content consumers | Podcast guests, newsletter subscribers | YouTube commenters, blog commenters | Scraping |
+| Job postings (as signals) | LinkedIn, Indeed, Glassdoor | AngelList, company sites | Scraping |
+
+#### Scraping Methods
+
+**API-Based (preferred — faster, cleaner, legal):**
+- Apollo.io API — company + contact search with filters (industry, size, tech, location)
+- Hunter.io API — email finding and verification
+- Crunchbase API — company data, funding, investors
+- BuiltWith API — technology profiling
+- Google Maps API — local business scraping
+- LinkedIn Sales Navigator API — people and company search (via official partnership or browser extension)
+- Clearbit API — company and contact enrichment
+- SimilarWeb API — website traffic and analytics
+
+**Web Scraping (when APIs unavailable):**
+- Use Playwright or Puppeteer for dynamic JavaScript sites
+- Use Cheerio or BeautifulSoup for static HTML sites
+- Implement rate limiting (1-2 requests/second) to avoid blocks
+- Rotate user agents and use proxy rotation
+- Respect robots.txt and terms of service
+- Store raw HTML for reprocessing if extraction logic changes
+
+**Enrichment Chain (run in sequence):**
+1. Start with company name + website URL
+2. Enrich with industry, size, revenue, tech stack (BuiltWith/Clearbit)
+3. Find decision-maker names + titles (Apollo/LinkedIn)
+4. Find email addresses (Hunter.io → Apollo → Snov.io fallback)
+5. Verify emails (NeverBounce, ZeroBounce, or Hunter verification)
+6. Find phone numbers (Apollo/Lusha)
+7. Find social profiles (LinkedIn, Twitter)
+8. Score and rank leads (see 7.4)
+
+#### Scraping Plan Output
+Claude generates a specific, actionable plan:
+> **Scraping Plan: SaaS Companies using Shopify + Klaviyo**
+> 
+> **Step 1**: Query Apollo.io API for companies matching:
+> - Industry: E-commerce, Retail Technology
+> - Employee count: 20-100
+> - Technologies: Shopify, Klaviyo
+> - Location: Austin TX, Denver CO, Nashville TN
+> - Founded: 2021-2024
+> - Expected results: ~2,000 companies
+> 
+> **Step 2**: Pull decision-makers from matching companies:
+> - Titles: CEO, Founder, Head of Marketing, CMO, VP Growth
+> - Expected results: ~4,000 contacts
+> 
+> **Step 3**: Enrich with emails via Hunter.io + verification
+> - Expected valid emails: ~2,800 (70% find rate)
+> 
+> **Step 4**: Enrich with tech stack via BuiltWith
+> - Confirm Shopify + Klaviyo usage
+> 
+> **Step 5**: Score, deduplicate against existing CRM contacts, import
+> 
+> **Estimated cost**: $150 (Apollo credits) + $50 (Hunter credits) = $200
+> **Estimated timeline**: 4-6 hours automated
+> **Expected qualified leads**: ~1,500
+
+### 7.4 Lead Scoring & Qualification
+
+Every scraped lead gets automatically scored before entering the CRM:
+
+#### Scoring Model (0-100 points)
+
+**Fit Score (0-50 points)** — how well they match the ICP:
+| Signal | Points | Criteria |
+|--------|--------|----------|
+| Industry match | 10 | Exact industry match to ICP |
+| Company size match | 10 | Within target employee range |
+| Revenue match | 5 | Within target revenue range |
+| Geography match | 5 | In target location |
+| Tech stack match | 10 | Uses target technologies |
+| Job title match | 5 | Decision-maker title matches target |
+| Funding/growth signals | 5 | Recently funded, hiring, growing |
+
+**Intent Score (0-30 points)** — signals they're likely to buy:
+| Signal | Points | Criteria |
+|--------|--------|----------|
+| Hiring for relevant role | 10 | Posting jobs that suggest they need your product |
+| Recently funded | 5 | New funding = new budget |
+| Competitor's customer | 10 | Using a competitor's product |
+| Content engagement | 5 | Engaged with relevant content/communities |
+
+**Engagement Score (0-20 points)** — interaction with your brand:
+| Signal | Points | Criteria |
+|--------|--------|----------|
+| Visited website | 5 | Tracked via pixel/UTM |
+| Opened email | 5 | From cold email or nurture sequence |
+| Clicked ad | 5 | Engaged with any ad campaign |
+| Social engagement | 5 | Liked, commented, or shared your content |
+
+#### Lead Grades
+- **A (80-100)**: Hot lead — push to sales immediately + high-priority ad retargeting
+- **B (60-79)**: Warm lead — enter nurture sequence + medium-priority retargeting
+- **C (40-59)**: Potential — enter long-term nurture + broad retargeting
+- **D (0-39)**: Low priority — add to general audience, no active outreach
+
+### 7.5 Push to Campaigns (Auto-Activation)
+
+Once leads are scored and imported, automatically push them into the right channels:
+
+#### Ad Campaign Activation
+- **Custom audiences**: upload scraped email lists to Google, Meta, X, TikTok as custom audiences
+- **Lookalike expansion**: create lookalike audiences from your A-grade leads on each platform
+- **Retargeting sequences**: 
+  - Day 1-7: Brand awareness ads (introduce your company)
+  - Day 8-14: Value ads (case studies, testimonials, results)
+  - Day 15-21: Offer ads (free trial, demo, consultation CTA)
+  - Day 22-30: Urgency ads (limited time offer, scarcity)
+- **Platform selection**: based on where your ICP spends time (from interview question #16)
+- **Budget allocation**: weight spend toward platforms with best historical ROAS for similar audiences
+
+#### Email Sequence Activation
+- **A-grade leads**: immediate personalized cold email sequence (5 emails over 14 days)
+  - Email 1: Personalized intro + pain point (uses Copywriting skill)
+  - Email 2: Case study relevant to their industry
+  - Email 3: Quick question / conversation starter
+  - Email 4: Value-add (free resource, insight, or tool)
+  - Email 5: Breakup email with soft CTA
+- **B-grade leads**: warm nurture sequence (7 emails over 30 days)
+- **C-grade leads**: long-term newsletter/content drip
+- **All emails**: personalized using scraped data (company name, industry, tech stack, recent news)
+
+#### Social Media Activation
+- **Targeted content**: create social posts addressing the pain points of the scraped audience
+- **Employee advocacy**: generate posts for sales team to share on LinkedIn targeting the ICP
+- **Direct outreach**: generate personalized LinkedIn connection requests + messages
+- **Community engagement**: identify relevant groups/communities and create content for them
+
+#### CRM Pipeline Activation
+- **Auto-create contacts**: import all verified leads into CRM with full enrichment data
+- **Auto-create deals**: for A-grade leads, create deals in the pipeline at "Lead" stage
+- **Auto-assign**: distribute leads to sales team members based on geography, industry, or round-robin
+- **Auto-tag**: tag every lead with source (scraped), scraping campaign name, and date
+- **Activity logging**: log every touchpoint (ad impression, email sent, social engagement) on the contact timeline
+
+### 7.6 Campaign Performance Feedback Loop
+
+The lead gen engine learns and improves over time:
+
+- **Conversion tracking**: track which scraped leads actually become customers
+- **Source quality ranking**: rank scraping sources by lead-to-customer conversion rate
+- **Profile refinement**: if certain traits correlate with higher close rates, weight them higher in future scoring
+- **Scraping ROI**: calculate cost per qualified lead, cost per customer from scraping vs ads vs organic
+- **Auto-adjust ICP**: suggest ICP refinements based on which scraped leads convert best
+- **Re-scraping triggers**: when pipeline gets thin, auto-suggest "Time to run another scraping campaign. Based on your last batch, I recommend targeting [refined ICP]"
+- **Exclusion learning**: if certain company types consistently fail to convert, auto-exclude them from future scrapes
+
+### 7.7 Compliance & Ethics Guardrails
+
+- **Email verification**: never send to unverified emails (protect sender reputation)
+- **CAN-SPAM / GDPR**: include unsubscribe links, honor opt-outs, respect GDPR data requests
+- **Rate limiting**: never scrape faster than 1-2 requests/second per source
+- **Robots.txt**: respect website scraping policies
+- **Terms of service**: flag when a scraping source's ToS prohibits automated access
+- **Data retention**: allow users to set auto-delete policies for unresponsive leads (e.g., delete after 90 days of no engagement)
+- **Opt-out sync**: if someone unsubscribes from email, automatically exclude from ad retargeting too
+- **Duplicate detection**: check against existing CRM contacts before importing (match on email, company+name, phone)
+- **Do-not-contact list**: maintain a global suppression list that applies across all channels
+
+### 7.8 Lead Generation Dashboard
+
+A dedicated dashboard view:
+
+- **Campaign overview**: active scraping campaigns, leads found, leads qualified, leads converted
+- **Funnel visualization**: scraped → verified → scored → contacted → responded → meeting → deal → won
+- **Source comparison**: which scraping sources produce the best leads (chart)
+- **Scoring accuracy**: compare predicted scores vs actual outcomes — is the scoring model working?
+- **Cost analysis**: cost per lead by source, campaign, and channel
+- **Pipeline impact**: how many deals in the pipeline came from lead gen vs organic vs ads
+- **Velocity metrics**: how fast are scraped leads moving through the funnel vs other sources
+- **AI recommendations**: "Your last 3 scraping campaigns show that targeting companies using [technology] produces 2.5x better conversion rates. Consider focusing your next campaign there."
+
+---
+
 ## Integration With Other Installed Skills
 
 This CRM skill works with your other marketing skills:
@@ -396,6 +674,12 @@ This CRM skill works with your other marketing skills:
 | **Marketing Psychology** | Apply psychological triggers (scarcity, social proof, reciprocity) to social content |
 | **Content Strategy** | Align social content calendar with overall content marketing strategy |
 | **Competitor Alternatives** | Monitor competitor social presence, reverse-engineer their best content |
+| **Lead Magnets** | Create lead magnets targeted at scraped audience, track downloads as intent signals |
+| **Cold Email** | Auto-generate personalized cold email sequences for A/B-grade scraped leads |
+| **Customer Research** | Deepen ICP understanding using CRM data patterns + scraped audience insights |
+| **Programmatic SEO** | Create landing pages targeting keywords your best leads search for |
+| **RevOps** | Lead scoring, routing, and lifecycle management for scraped leads |
+| **Sales Enablement** | Auto-generate battle cards and talk tracks tailored to each scraped lead's profile |
 
 ---
 
@@ -425,7 +709,14 @@ When building this system, follow this order:
 20. **Social analytics dashboard** — post metrics, hashtag tracking, engagement heatmaps
 21. **Social ↔ CRM integration** — lead capture from social, attribution, testimonial mining
 22. **Approval workflow** — team review and scheduling pipeline
-23. **Reports & exports** — custom report builder, PDF/CSV export
+23. **Lead gen target interview** — interactive ICP profiling wizard
+24. **CRM data analysis for lead gen** — pattern detection on best customers
+25. **Scraping strategy engine** — source selection, enrichment chain, cost estimation
+26. **Lead scoring & qualification** — automated 0-100 scoring with fit + intent + engagement
+27. **Push to campaigns** — auto-activate ads, email sequences, social, and pipeline
+28. **Lead gen feedback loop** — conversion tracking, ICP refinement, source quality ranking
+29. **Lead gen dashboard** — funnel visualization, cost analysis, AI recommendations
+30. **Reports & exports** — custom report builder, PDF/CSV export
 
 ---
 
