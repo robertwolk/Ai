@@ -1,10 +1,13 @@
 import { Sidebar } from "@/components/sidebar";
+import { requireAuth } from "@/lib/auth-helpers";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await requireAuth();
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />

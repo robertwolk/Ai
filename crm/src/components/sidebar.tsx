@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import { getInitials } from "@/lib/utils";
 
 const navItems = [
   {
@@ -51,6 +53,10 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const userName = session?.user?.name || "User";
+  const userEmail = session?.user?.email || "";
+  const userRole = session?.user?.role || "MEMBER";
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar-bg text-sidebar-fg flex flex-col">
@@ -101,15 +107,29 @@ export function Sidebar() {
       </nav>
 
       {/* User section */}
-      <div className="border-t border-white/10 p-4">
+      <div className="border-t border-white/10 p-4 space-y-3">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sidebar-accent text-sm font-medium text-white">
-            U
+            {getInitials(userName)}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">User</p>
-            <p className="text-xs text-sidebar-fg/50 truncate">user@example.com</p>
+            <p className="text-sm font-medium truncate">{userName}</p>
+            <p className="text-xs text-sidebar-fg/50 truncate">{userEmail}</p>
           </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs rounded-full bg-sidebar-accent/30 px-2 py-0.5 text-sidebar-fg/60 font-medium uppercase tracking-wider">
+            {userRole}
+          </span>
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="flex items-center gap-1.5 text-xs text-sidebar-fg/50 hover:text-sidebar-fg transition-colors"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Sign out
+          </button>
         </div>
       </div>
     </aside>
