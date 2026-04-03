@@ -223,3 +223,160 @@
 | imported_at | TIMESTAMP | When conversion was sent |
 | status | ENUM | PENDING, SUCCESS, FAILED |
 | error_message | TEXT | Error details if failed |
+
+---
+
+## Social Media Tables
+
+### social_accounts
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| platform | ENUM | FACEBOOK, INSTAGRAM, X, TIKTOK, LINKEDIN, YOUTUBE |
+| account_name | VARCHAR | Display name / handle |
+| account_id | VARCHAR | Platform-specific account/page ID |
+| access_token | TEXT | Encrypted OAuth token |
+| refresh_token | TEXT | Encrypted refresh token |
+| token_expires_at | TIMESTAMP | When token expires |
+| follower_count | INTEGER | Current follower count |
+| is_active | BOOLEAN | Whether publishing is enabled |
+| last_synced_at | TIMESTAMP | Last metrics sync |
+
+### social_posts
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| campaign_id | UUID | FK → campaigns (optional, for attribution) |
+| content_theme_id | UUID | FK → content_themes (which pillar this belongs to) |
+| series_id | UUID | FK → content_series (if part of a recurring series) |
+| status | ENUM | DRAFT, IN_REVIEW, APPROVED, SCHEDULED, PUBLISHED, FAILED |
+| post_type | ENUM | IMAGE, VIDEO, CAROUSEL, STORY, REEL, SHORT, THREAD, POLL, TEXT |
+| created_by | UUID | FK → users |
+| approved_by | UUID | FK → users |
+| created_at | TIMESTAMP | When created |
+| updated_at | TIMESTAMP | Last updated |
+
+### social_post_versions
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| social_post_id | UUID | FK → social_posts |
+| version_number | INTEGER | 1, 2, 3... |
+| caption | TEXT | Full post caption/text |
+| hook | VARCHAR | Opening line / scroll-stopper |
+| cta | VARCHAR | Call to action text |
+| alt_text | TEXT | Accessibility image description |
+| hashtags | JSONB | {"primary": [...], "secondary": [...], "branded": [...]} |
+| ai_generation_prompt | TEXT | The prompt used to generate this version |
+| edited_by | UUID | FK → users (null if AI-generated) |
+| created_at | TIMESTAMP | When this version was created |
+
+### social_post_platforms
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| social_post_id | UUID | FK → social_posts |
+| social_account_id | UUID | FK → social_accounts |
+| platform | ENUM | FACEBOOK, INSTAGRAM, X, TIKTOK, LINKEDIN, YOUTUBE |
+| platform_post_id | VARCHAR | Post ID on the platform (after publishing) |
+| adapted_caption | TEXT | Platform-specific adapted caption |
+| adapted_hashtags | JSONB | Platform-specific hashtags |
+| scheduled_at | TIMESTAMP | When to publish |
+| published_at | TIMESTAMP | When actually published |
+| status | ENUM | PENDING, SCHEDULED, PUBLISHED, FAILED |
+| error_message | TEXT | Error details if publishing failed |
+
+### social_post_creatives
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| social_post_id | UUID | FK → social_posts |
+| creative_type | ENUM | IMAGE, VIDEO, CAROUSEL_SLIDE, THUMBNAIL, STORY_FRAME |
+| file_url | VARCHAR | URL to the creative file |
+| file_path | VARCHAR | Local file path |
+| width | INTEGER | Image/video width in pixels |
+| height | INTEGER | Image/video height in pixels |
+| duration_seconds | INTEGER | Video duration (null for images) |
+| slide_order | INTEGER | Order in carousel (null for single) |
+| design_prompt | TEXT | AI prompt used to generate this creative |
+| brand_colors_used | JSONB | Which brand colors were applied |
+| brand_fonts_used | JSONB | Which brand fonts were applied |
+| created_at | TIMESTAMP | When created |
+
+### social_post_metrics
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| social_post_platform_id | UUID | FK → social_post_platforms |
+| date | DATE | Metric date |
+| impressions | INTEGER | Total impressions |
+| reach | INTEGER | Unique people reached |
+| likes | INTEGER | Likes/reactions |
+| comments | INTEGER | Comments/replies |
+| shares | INTEGER | Shares/retweets/reposts |
+| saves | INTEGER | Saves/bookmarks |
+| clicks | INTEGER | Link clicks |
+| video_views | INTEGER | Video views (if applicable) |
+| video_watch_time_seconds | INTEGER | Total watch time |
+| profile_visits | INTEGER | Profile visits driven by post |
+| follows | INTEGER | New follows from this post |
+| engagement_rate | DECIMAL | (likes+comments+shares+saves) / reach |
+| synced_at | TIMESTAMP | When metrics were last pulled |
+
+### content_themes
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| name | VARCHAR | Theme name (e.g., "Educational", "Behind-the-scenes") |
+| description | TEXT | What this theme covers |
+| color | VARCHAR | Calendar display color (hex) |
+| target_percentage | INTEGER | Target % of content (e.g., 40 = 40%) |
+| is_active | BOOLEAN | Whether theme is currently in use |
+
+### content_series
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| name | VARCHAR | Series name (e.g., "Tip Tuesday") |
+| description | TEXT | What this series covers |
+| theme_id | UUID | FK → content_themes |
+| frequency | ENUM | WEEKLY, BIWEEKLY, MONTHLY |
+| preferred_day | INTEGER | Day of week (0=Mon, 6=Sun) |
+| preferred_time | TIME | Preferred posting time |
+| template_prompt | TEXT | AI prompt template for generating episodes |
+| episode_count | INTEGER | How many episodes published so far |
+| is_active | BOOLEAN | Whether series is currently running |
+
+### hashtag_performance
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| hashtag | VARCHAR | The hashtag text (without #) |
+| platform | ENUM | INSTAGRAM, TIKTOK, X, LINKEDIN, FACEBOOK |
+| times_used | INTEGER | How many times we've used this hashtag |
+| avg_reach | DECIMAL | Average reach on posts using this hashtag |
+| avg_engagement_rate | DECIMAL | Average engagement rate |
+| best_reach | INTEGER | Best reach achieved with this hashtag |
+| last_used_at | TIMESTAMP | When we last used it |
+| is_banned | BOOLEAN | Whether flagged as shadowbanned/restricted |
+| updated_at | TIMESTAMP | Last metrics update |
+
+### social_post_approvals
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| social_post_id | UUID | FK → social_posts |
+| reviewer_id | UUID | FK → users |
+| action | ENUM | APPROVED, REJECTED, REQUESTED_CHANGES |
+| comment | TEXT | Review feedback |
+| created_at | TIMESTAMP | When review was submitted |
+
+### posting_queue
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| social_account_id | UUID | FK → social_accounts |
+| day_of_week | INTEGER | 0=Mon through 6=Sun |
+| time_slot | TIME | Posting time |
+| is_filled | BOOLEAN | Whether a post is assigned to this slot |
+| social_post_id | UUID | FK → social_posts (the assigned post) |

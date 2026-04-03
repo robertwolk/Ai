@@ -12,6 +12,12 @@ Use this skill when the user wants to:
 - Connect their CRM data to their ad campaigns
 - Track leads from ad click → customer conversion
 - Generate reports on marketing ROI
+- Create social media posts and content for any platform
+- Plan social media on a visual content calendar
+- Generate complete post packages (copy, design, hashtags, CTAs)
+- Analyze past post performance and get AI-powered suggestions
+- Schedule and publish content across all social platforms
+- Build content themes, series, and batched content plans
 
 ## Architecture Overview
 
@@ -195,6 +201,172 @@ This is what makes the system powerful — connecting CRM data to ads and vice v
 
 ---
 
+## Module 6: Social Media Content & Design Studio
+
+An AI-powered social media command center built into the CRM. Claude creates all posts, ads, and creatives — learning from your past performance to get better over time. Everything is planned on a visual calendar.
+
+### 6.1 Visual Content Calendar
+
+Build a full-screen calendar view (month/week/day) using a library like FullCalendar or custom-built with date-fns:
+
+- **Month view**: color-coded dots per platform (blue = Facebook, pink = Instagram, black = X, teal = TikTok, blue = LinkedIn, red = YouTube)
+- **Week view**: time slots showing scheduled posts with thumbnail previews
+- **Day view**: detailed timeline with post previews, status indicators, and engagement predictions
+- **Drag-and-drop rescheduling**: move posts to different dates/times by dragging
+- **Filter by platform**: toggle platforms on/off to focus on specific channels
+- **Filter by status**: Draft, Scheduled, Published, Failed
+- **Filter by campaign**: link posts to CRM campaigns/deals for attribution
+- **Bulk scheduling**: select multiple dates and fill them with a content series
+- **Optimal time suggestions**: AI recommends best posting times per platform based on historical engagement data
+- **Holiday/event markers**: auto-populate calendar with relevant holidays, industry events, and awareness days
+
+### 6.2 AI Content Generator (Powered by Claude)
+
+Claude generates all content using your brand voice, past performance data, and platform best practices:
+
+#### How It Works
+1. User selects platform(s) and content goal (awareness, engagement, traffic, conversion)
+2. Claude analyzes:
+   - **Brand DNA**: tone, voice, colors, fonts, messaging from the Brand skill
+   - **Top-performing past posts**: what topics, formats, hooks, and CTAs worked best
+   - **Competitor content**: what's working in your industry (via Ads Competitor skill)
+   - **Trending topics**: relevant trends for each platform
+   - **CRM data**: what products/services are in the pipeline, what customers care about
+3. Claude generates complete post packages (see 6.3 below)
+4. User reviews, edits, approves, or regenerates
+
+#### Content Types Generated
+- **Organic posts**: regular social media posts (text, image, video, carousel, stories)
+- **Paid ad creatives**: ad-ready posts with proper specs per platform
+- **Stories/Reels/Shorts**: vertical video concepts with scripts, hooks, and CTAs
+- **Threads/Carousels**: multi-slide educational or storytelling content
+- **Polls & interactive**: engagement-driving interactive content
+- **User-generated content prompts**: prompts to encourage customers to create content
+
+#### Learning From Previous Posts
+- **Performance database**: store every published post with its metrics (likes, comments, shares, clicks, saves, reach)
+- **Pattern analysis**: Claude identifies what works — which hooks get attention, which CTAs drive clicks, which visuals get saves
+- **Topic scoring**: rank content topics by average engagement rate
+- **Format scoring**: rank content formats (carousel vs video vs image vs text) by platform
+- **Time scoring**: track which posting times drive the most engagement
+- **Hashtag scoring**: track which hashtags drive the most reach
+- **Tone analysis**: identify whether educational, entertaining, inspirational, or promotional content performs best
+- **Suggestions engine**: before creating new content, Claude shows "Based on your last 30 posts, carousels about [topic] posted on Tuesdays at 10am get 3x more engagement than your average post"
+
+### 6.3 Complete Post Packages
+
+Every post Claude creates includes ALL of the following — nothing left for the user to figure out:
+
+#### Text & Copy
+- **Primary text/caption**: platform-optimized length (Instagram 2200 chars, X 280 chars, LinkedIn 3000 chars, TikTok 2200 chars, Facebook 63,206 chars)
+- **Hook/opening line**: the first line that makes people stop scrolling — tested against your top performers
+- **Body**: the main message, formatted for each platform (line breaks, spacing, emojis where appropriate)
+- **CTA (Call to Action)**: specific, actionable next step (link in bio, comment below, DM us, visit link)
+- **Alt text**: accessible image descriptions for screen readers
+
+#### Hashtags
+- **Primary hashtags** (5-10): high-volume, directly relevant to the post topic
+- **Secondary hashtags** (5-10): medium-volume niche hashtags for discoverability
+- **Branded hashtags** (1-3): your own branded hashtags for tracking
+- **Banned hashtag check**: automatically flag shadowbanned or restricted hashtags
+- **Platform-specific strategy**:
+  - Instagram: 20-30 hashtags (mix of sizes), placed in first comment or caption
+  - TikTok: 3-5 targeted hashtags in caption
+  - X: 1-2 hashtags only (more hurts engagement)
+  - LinkedIn: 3-5 professional hashtags
+  - Facebook: 0-2 hashtags (minimal impact)
+- **Hashtag performance tracking**: track which hashtags drive the most reach over time, replace underperformers
+
+#### Visual Design & Creative
+Use the **UI/UX Pro Max**, **Brand**, **Banner Design**, and **Ad Creative** skills to generate:
+
+- **Image posts**: designed graphics with proper dimensions per platform
+  - Instagram feed: 1080x1080 (square), 1080x1350 (portrait)
+  - Instagram Stories/Reels: 1080x1920
+  - Facebook feed: 1200x630
+  - X: 1200x675
+  - LinkedIn: 1200x627
+  - TikTok: 1080x1920
+- **Carousel slides**: multi-image posts with consistent design, each slide builds on the story
+- **Video concepts**: storyboard with scene-by-scene breakdown, script, text overlays, music suggestions
+- **Story templates**: branded story designs with interactive elements (polls, questions, sliders)
+- **Thumbnail designs**: for video posts and YouTube
+- **Brand consistency**: all creatives automatically use your brand colors, fonts, and logo from the Brand skill
+- **Design variations**: generate 2-3 visual options for each post so the user can pick their favorite
+- **Text overlay placement**: ensure text is readable, doesn't overlap key visual elements, and respects platform safe zones
+
+#### Platform-Specific Adaptations
+Claude automatically adapts the same content idea for each platform:
+
+| Element | Instagram | Facebook | X | TikTok | LinkedIn | YouTube |
+|---------|-----------|----------|---|--------|----------|---------|
+| **Tone** | Visual, aspirational | Conversational, shareable | Witty, concise | Fun, authentic, trendy | Professional, insightful | Educational, in-depth |
+| **Length** | Medium caption | Medium-long | Short (280 chars) | Short caption | Long-form OK | Title + description |
+| **Format** | Carousel, Reels | Video, link posts | Threads, polls | Short video, duets | Articles, documents | Long video, Shorts |
+| **CTA** | "Link in bio" | "Click the link" | "Reply with..." | "Follow for more" | "What do you think?" | "Subscribe" |
+| **Hashtags** | 20-30 | 0-2 | 1-2 | 3-5 | 3-5 | Tags (not hashtags) |
+| **Best time** | AI-suggested | AI-suggested | AI-suggested | AI-suggested | AI-suggested | AI-suggested |
+
+### 6.4 Content Themes & Series
+
+Help users build consistent content pillars:
+
+- **Content pillars**: define 4-6 recurring themes (e.g., Educational, Behind-the-scenes, Customer stories, Product tips, Industry news, Entertainment)
+- **Content ratio**: suggest a mix (e.g., 40% educational, 20% promotional, 20% engagement, 20% entertainment)
+- **Recurring series**: set up weekly/monthly series (e.g., "Tip Tuesday", "Client Spotlight Friday", "Monthly Myth Buster")
+- **Content batching**: generate a full week or month of content in one session
+- **Theme calendar**: auto-distribute themes across the calendar so content stays varied
+
+### 6.5 Approval Workflow
+
+For teams:
+- **Draft → Review → Approved → Scheduled → Published** workflow
+- **Role-based access**: content creator, reviewer, approver, admin
+- **Comment on drafts**: team members can leave feedback on specific posts
+- **Version history**: see all revisions of a post
+- **Bulk approve**: approve multiple posts at once for efficient review
+
+### 6.6 Publishing & Scheduling
+
+- **Direct publishing** via platform APIs:
+  - Meta Graph API (Facebook + Instagram)
+  - X API v2
+  - TikTok Content Posting API
+  - LinkedIn Marketing API
+  - YouTube Data API v3
+- **Queue system**: set up a posting queue with time slots, posts auto-fill into the next available slot
+- **Timezone handling**: schedule in user's timezone, publish in each platform's optimal timezone
+- **Auto-retry**: if publishing fails, retry 3 times with exponential backoff, then alert user
+- **Cross-posting**: publish the same content (adapted) to multiple platforms simultaneously
+
+### 6.7 Performance Analytics Dashboard
+
+After posts are published, track everything:
+
+- **Post-level metrics**: likes, comments, shares, saves, reach, impressions, clicks, video views per post
+- **Engagement rate tracking**: calculate and trend engagement rate over time
+- **Best/worst performers**: highlight top 5 and bottom 5 posts with analysis of why
+- **Content type comparison**: which format performs best on which platform (chart)
+- **Hashtag leaderboard**: rank hashtags by reach driven
+- **Posting time heatmap**: visual grid showing engagement by day-of-week × hour
+- **Follower growth**: track follower count changes tied to content activity
+- **Competitor benchmarking**: compare your metrics to industry averages
+- **AI insights**: Claude generates weekly/monthly insights like "Your carousel posts get 2.5x more saves than image posts. Consider doing more carousels about [topic]."
+
+### 6.8 CRM ↔ Social Media Integration
+
+Connect social content to the rest of the CRM:
+
+- **Lead capture**: when someone DMs, comments, or clicks a social post → auto-create lead in CRM
+- **Attribution**: track which social posts drove which leads/deals
+- **Customer content**: auto-suggest content ideas based on common customer questions from CRM notes
+- **Testimonial mining**: identify positive customer interactions in CRM → suggest turning them into social proof posts
+- **Retargeting fuel**: people who engage with organic posts → add to retargeting audiences for paid ads
+- **Sales team content**: auto-generate social posts for sales reps to share (employee advocacy)
+- **Revenue per post**: connect social post → lead → deal → revenue for true ROI per post
+
+---
+
 ## Integration With Other Installed Skills
 
 This CRM skill works with your other marketing skills:
@@ -215,6 +387,15 @@ This CRM skill works with your other marketing skills:
 | **Referral Program** | Track referral-sourced leads separately in CRM, compare to paid acquisition |
 | **RevOps** | Lead scoring, routing, and lifecycle management powered by ad + CRM data |
 | **Website Cloner** | Clone competitor landing pages, A/B test them with your ad traffic |
+| **Social Content** | Platform-specific post templates and reverse-engineering of viral content |
+| **Banner Design** | Generate social media graphics, banners, and ad creatives at correct dimensions |
+| **Brand** | Enforce brand voice, colors, fonts, and messaging across all social posts |
+| **UI/UX Pro Max** | Design all social graphics, carousels, and story templates with professional quality |
+| **Ads Audit** | Audit paid social campaigns alongside organic social performance |
+| **Ads Creative** | Generate ad-ready creatives from top-performing organic posts (boost strategy) |
+| **Marketing Psychology** | Apply psychological triggers (scarcity, social proof, reciprocity) to social content |
+| **Content Strategy** | Align social content calendar with overall content marketing strategy |
+| **Competitor Alternatives** | Monitor competitor social presence, reverse-engineer their best content |
 
 ---
 
@@ -222,7 +403,7 @@ This CRM skill works with your other marketing skills:
 
 When building this system, follow this order:
 
-1. **Database schema & models** — contacts, deals, activities, campaigns, ad accounts
+1. **Database schema & models** — contacts, deals, activities, campaigns, ad accounts, social posts
 2. **CRM core** — contact CRUD, pipeline view, activity logging
 3. **Auth & team** — user accounts, roles, permissions
 4. **Dashboard** — main CRM dashboard with charts
@@ -236,7 +417,15 @@ When building this system, follow this order:
 12. **Offline conversion import** — CRM → ad platforms
 13. **Optimization engine** — auto-budget, auto-pause, auto-bid
 14. **Optimization log & undo** — transparency and safety
-15. **Reports & exports** — custom report builder, PDF/CSV export
+15. **Social media content calendar** — visual calendar UI with drag-and-drop
+16. **AI content generator** — Claude-powered post creation with brand voice
+17. **Post performance database** — store metrics, build learning engine
+18. **Content themes & series** — pillar system, recurring series, content batching
+19. **Social publishing** — direct API publishing to all platforms
+20. **Social analytics dashboard** — post metrics, hashtag tracking, engagement heatmaps
+21. **Social ↔ CRM integration** — lead capture from social, attribution, testimonial mining
+22. **Approval workflow** — team review and scheduling pipeline
+23. **Reports & exports** — custom report builder, PDF/CSV export
 
 ---
 
