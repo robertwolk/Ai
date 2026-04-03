@@ -380,3 +380,128 @@
 | time_slot | TIME | Posting time |
 | is_filled | BOOLEAN | Whether a post is assigned to this slot |
 | social_post_id | UUID | FK → social_posts (the assigned post) |
+
+---
+
+## Lead Generation Tables
+
+### lead_gen_campaigns
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| name | VARCHAR | Campaign name (e.g., "Q2 SaaS Outreach") |
+| status | ENUM | DRAFT, PROFILING, SCRAPING, ENRICHING, SCORING, ACTIVATING, ACTIVE, PAUSED, COMPLETED |
+| target_profile | JSONB | Full ICP from interview (industry, size, tech, geo, titles, etc.) |
+| interview_responses | JSONB | Raw Q&A from the target discovery interview |
+| crm_analysis | JSONB | AI analysis of existing contacts/campaigns |
+| scraping_plan | JSONB | The scraping strategy (sources, steps, estimated costs) |
+| scraping_sources | TEXT[] | Which APIs/sources to use |
+| target_lead_count | INTEGER | How many leads to find |
+| actual_lead_count | INTEGER | How many leads were found |
+| qualified_lead_count | INTEGER | How many scored B or above |
+| estimated_cost | DECIMAL | Estimated scraping/enrichment cost |
+| actual_cost | DECIMAL | Actual cost spent |
+| created_by | UUID | FK → users |
+| created_at | TIMESTAMP | When campaign was created |
+| completed_at | TIMESTAMP | When scraping finished |
+
+### lead_gen_leads
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| lead_gen_campaign_id | UUID | FK → lead_gen_campaigns |
+| contact_id | UUID | FK → contacts (after import to CRM) |
+| status | ENUM | SCRAPED, ENRICHING, ENRICHED, VERIFIED, SCORED, IMPORTED, DUPLICATE, REJECTED |
+| first_name | VARCHAR | Person first name |
+| last_name | VARCHAR | Person last name |
+| email | VARCHAR | Email address |
+| email_status | ENUM | VALID, INVALID, CATCH_ALL, UNKNOWN, UNVERIFIED |
+| phone | VARCHAR | Phone number |
+| job_title | VARCHAR | Current job title |
+| linkedin_url | VARCHAR | LinkedIn profile URL |
+| twitter_handle | VARCHAR | X/Twitter handle |
+| company_name | VARCHAR | Company name |
+| company_domain | VARCHAR | Company website domain |
+| company_industry | VARCHAR | Industry classification |
+| company_size | VARCHAR | Employee count range |
+| company_revenue | VARCHAR | Revenue range |
+| company_location | VARCHAR | HQ location |
+| company_founded | INTEGER | Year founded |
+| company_tech_stack | JSONB | Technologies detected |
+| company_funding | JSONB | Funding data (rounds, total, investors) |
+| hiring_signals | JSONB | Active job postings relevant to your product |
+| intent_signals | JSONB | Buying intent signals detected |
+| fit_score | INTEGER | 0-50 ICP fit score |
+| intent_score | INTEGER | 0-30 intent score |
+| engagement_score | INTEGER | 0-20 engagement score |
+| total_score | INTEGER | 0-100 combined score |
+| lead_grade | ENUM | A, B, C, D |
+| enrichment_sources | JSONB | Which APIs provided which data |
+| enrichment_cost | DECIMAL | Cost to enrich this lead |
+| scraped_at | TIMESTAMP | When initially found |
+| enriched_at | TIMESTAMP | When enrichment completed |
+| scored_at | TIMESTAMP | When scoring completed |
+| imported_at | TIMESTAMP | When imported to CRM |
+
+### lead_gen_activations
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| lead_gen_campaign_id | UUID | FK → lead_gen_campaigns |
+| channel | ENUM | GOOGLE_ADS, META_ADS, X_ADS, TIKTOK_ADS, COLD_EMAIL, LINKEDIN_OUTREACH, SOCIAL_CONTENT |
+| activation_type | ENUM | CUSTOM_AUDIENCE, LOOKALIKE, RETARGETING, EMAIL_SEQUENCE, DIRECT_OUTREACH, CONTENT_TARGETING |
+| platform_audience_id | VARCHAR | Audience ID on the ad platform (if applicable) |
+| email_sequence_id | UUID | FK → email sequences (if applicable) |
+| campaign_id | UUID | FK → campaigns (if ad activation) |
+| leads_pushed | INTEGER | Number of leads pushed to this channel |
+| lead_grade_filter | ENUM | A, B, C, D (which grades were pushed) |
+| status | ENUM | PENDING, ACTIVE, PAUSED, COMPLETED |
+| created_at | TIMESTAMP | When activation was created |
+
+### lead_gen_source_performance
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| source | VARCHAR | API/source name (e.g., "apollo", "hunter", "builtwith") |
+| lead_gen_campaign_id | UUID | FK → lead_gen_campaigns |
+| leads_found | INTEGER | Total leads from this source |
+| leads_verified | INTEGER | Leads with verified emails |
+| leads_converted | INTEGER | Leads that became customers |
+| cost | DECIMAL | Total cost for this source |
+| cost_per_lead | DECIMAL | Cost / leads_found |
+| cost_per_verified | DECIMAL | Cost / leads_verified |
+| cost_per_customer | DECIMAL | Cost / leads_converted |
+| avg_lead_score | DECIMAL | Average score of leads from this source |
+| conversion_rate | DECIMAL | leads_converted / leads_found |
+| updated_at | TIMESTAMP | Last updated |
+
+### ideal_customer_profiles
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| name | VARCHAR | Profile name (e.g., "Primary ICP", "Secondary ICP") |
+| version | INTEGER | Version number (profiles evolve over time) |
+| industries | TEXT[] | Target industries |
+| company_sizes | TEXT[] | Employee count ranges |
+| revenue_ranges | TEXT[] | Revenue ranges |
+| geographies | TEXT[] | Target locations |
+| job_titles | TEXT[] | Decision-maker titles |
+| tech_stack | TEXT[] | Required technologies |
+| funding_stages | TEXT[] | Target funding stages |
+| behavioral_signals | JSONB | Buying triggers, content consumption, communities |
+| negative_signals | JSONB | Disqualifying traits (from feedback loop) |
+| source_data | JSONB | CRM analysis data that informed this profile |
+| performance_metrics | JSONB | How leads matching this ICP have performed |
+| is_active | BOOLEAN | Whether actively used for scraping |
+| created_at | TIMESTAMP | When created |
+| updated_at | TIMESTAMP | Last refined |
+
+### suppression_list
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| email | VARCHAR | Suppressed email address |
+| domain | VARCHAR | Suppressed company domain (optional) |
+| reason | ENUM | UNSUBSCRIBED, BOUNCED, COMPLAINED, DO_NOT_CONTACT, COMPETITOR, EXISTING_CUSTOMER |
+| source | VARCHAR | Where the suppression came from |
+| added_at | TIMESTAMP | When added to suppression list |
