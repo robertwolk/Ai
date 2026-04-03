@@ -1,522 +1,436 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import {
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  format,
-  isSameMonth,
-  isToday,
-  addMonths,
-  subMonths,
-  getDay,
-  isSameDay,
-} from "date-fns";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { startOfMonth, endOfMonth, eachDayOfInterval, format, addMonths, subMonths, getDay, isSameDay, isToday, isSameMonth } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { cn, formatNumber, formatDate } from "@/lib/utils";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
-// --- Types ---
-type Platform = "Instagram" | "Facebook" | "X" | "TikTok" | "LinkedIn" | "YouTube";
-type PostStatus = "Draft" | "Scheduled" | "Published" | "Failed";
+type Platform = "INSTAGRAM" | "FACEBOOK" | "X" | "TIKTOK" | "LINKEDIN" | "YOUTUBE";
+const PLATFORMS: { value: Platform; label: string; color: string; bg: string }[] = [
+  { value: "INSTAGRAM", label: "Instagram", color: "#E1306C", bg: "bg-pink-500" },
+  { value: "FACEBOOK", label: "Facebook", color: "#1877F2", bg: "bg-blue-600" },
+  { value: "X", label: "X", color: "#000000", bg: "bg-black" },
+  { value: "TIKTOK", label: "TikTok", color: "#00F2EA", bg: "bg-teal-500" },
+  { value: "LINKEDIN", label: "LinkedIn", color: "#0A66C2", bg: "bg-blue-700" },
+  { value: "YOUTUBE", label: "YouTube", color: "#FF0000", bg: "bg-red-600" },
+];
 
-interface SocialPost {
-  id: number;
-  platform: Platform;
-  content: string;
-  status: PostStatus;
-  scheduledDate: Date;
-  likes: number;
-  comments: number;
-  shares: number;
-  hashtags: string;
-}
+const statusColors: Record<string, string> = { DRAFT: "bg-gray-100 text-gray-800", SCHEDULED: "bg-blue-100 text-blue-800", PUBLISHED: "bg-green-100 text-green-800", FAILED: "bg-red-100 text-red-800", REVIEW: "bg-amber-100 text-amber-800", APPROVED: "bg-emerald-100 text-emerald-800" };
+const CHAR_LIMITS: Record<string, number> = { INSTAGRAM: 2200, FACEBOOK: 63206, X: 280, TIKTOK: 2200, LINKEDIN: 3000, YOUTUBE: 5000 };
 
-// --- Constants ---
-const platformColors: Record<Platform, string> = {
-  Instagram: "bg-pink-500",
-  Facebook: "bg-blue-600",
-  X: "bg-neutral-900",
-  TikTok: "bg-neutral-800",
-  LinkedIn: "bg-blue-700",
-  YouTube: "bg-red-600",
-};
+interface Post { id: string; content: string; platform: string; status: string; scheduledAt: string | null; publishedAt: string | null; metrics: string; hashtags: string; createdAt: string }
+interface Theme { id: string; name: string; description: string; color: string; contentRatio: number; _count?: { posts: number } }
 
-const platformTextColors: Record<Platform, string> = {
-  Instagram: "text-pink-600",
-  Facebook: "text-blue-600",
-  X: "text-neutral-900",
-  TikTok: "text-neutral-800",
-  LinkedIn: "text-blue-700",
-  YouTube: "text-red-600",
-};
+export default function SocialPage() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [themes, setThemes] = useState<Theme[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [month, setMonth] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [filterPlatform, setFilterPlatform] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
 
-const platformFilterStyles: Record<Platform | "All", string> = {
-  All: "bg-primary text-primary-foreground",
-  Instagram: "bg-pink-500 text-white",
-  Facebook: "bg-blue-600 text-white",
-  X: "bg-neutral-900 text-white",
-  TikTok: "bg-neutral-800 text-white",
-  LinkedIn: "bg-blue-700 text-white",
-  YouTube: "bg-red-600 text-white",
-};
-
-const statusStyles: Record<PostStatus, string> = {
-  Draft: "bg-secondary text-secondary-foreground",
-  Scheduled: "bg-blue-100 text-blue-800",
-  Published: "bg-green-100 text-green-800",
-  Failed: "bg-red-100 text-red-800",
-};
-
-const allPlatforms: Platform[] = ["Instagram", "Facebook", "X", "TikTok", "LinkedIn", "YouTube"];
-
-// --- Mock Data ---
-function generateMockPosts(): SocialPost[] {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-
-  const contents = [
-    "Excited to announce our new product launch! Stay tuned for something amazing.",
-    "Behind the scenes at our team retreat. Culture matters!",
-    "5 tips to boost your productivity this week. Thread below.",
-    "We just hit 10,000 customers! Thank you for your support.",
-    "New blog post: How AI is transforming small business marketing.",
-    "Happy Monday! What are your goals for this week?",
-    "Customer spotlight: See how @AcmeCorp grew 300% using our platform.",
-    "Join our live webinar this Thursday at 2pm EST.",
-    "Our CEO shares insights on the future of SaaS at #TechSummit2026.",
-    "Quick poll: What feature would you like us to build next?",
-    "Throwback to our first office. Look how far we have come!",
-    "Just shipped a major update: Dark mode is here!",
-    "We are hiring! Check out our open positions in engineering and design.",
-    "Infographic: The state of social media marketing in 2026.",
-    "Limited time offer: Get 30% off your first 3 months.",
-    "Meet the team: Sarah, our Head of Customer Success.",
-    "Did you know? Our platform processes 1M+ requests daily.",
-    "Free template: Download our social media content calendar.",
-    "Recap from last night's product demo. Watch the recording.",
-    "Celebrating 5 years of innovation. Here's to the next 5!",
-    "Pro tip: Use UTM parameters to track your campaign performance.",
-    "We partnered with @DesignCo for an exclusive masterclass.",
-    "Friday vibes. Wrapping up the week with a team lunch.",
-    "Case study: How we helped increase conversions by 45%.",
-    "Big announcement coming next week. Can you guess what it is?",
-  ];
-
-  const statuses: PostStatus[] = ["Draft", "Scheduled", "Published", "Failed"];
-
-  return contents.map((content, i) => ({
-    id: i + 1,
-    platform: allPlatforms[i % allPlatforms.length],
-    content,
-    status: i < 5 ? "Published" : i < 15 ? "Scheduled" : i < 22 ? "Draft" : "Failed",
-    scheduledDate: new Date(year, month, (i % 28) + 1, 9 + (i % 12), (i * 15) % 60),
-    likes: statuses[i % 4] === "Published" || i < 8 ? Math.floor(Math.random() * 500) + 20 : 0,
-    comments: i < 8 ? Math.floor(Math.random() * 80) + 5 : 0,
-    shares: i < 8 ? Math.floor(Math.random() * 120) + 2 : 0,
-    hashtags: i % 3 === 0 ? "#marketing #growth" : i % 3 === 1 ? "#saas #startup" : "#tech #ai",
-  }));
-}
-
-const mockPosts = generateMockPosts();
-
-// --- Page ---
-export default function SocialStudioPage() {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
-  const [platformFilter, setPlatformFilter] = useState<Platform | "All">("All");
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  // New post form state
+  // Create form
   const [newPlatforms, setNewPlatforms] = useState<Platform[]>([]);
   const [newContent, setNewContent] = useState("");
-  const [newSchedule, setNewSchedule] = useState("");
-  const [newStatus, setNewStatus] = useState("Draft");
-  const [newCta, setNewCta] = useState("");
   const [newHashtags, setNewHashtags] = useState("");
+  const [newGoal, setNewGoal] = useState("engagement");
+  const [newScheduleDate, setNewScheduleDate] = useState("");
+  const [newScheduleTime, setNewScheduleTime] = useState("10:00");
 
-  const filteredPosts = useMemo(
-    () =>
-      platformFilter === "All"
-        ? mockPosts
-        : mockPosts.filter((p) => p.platform === platformFilter),
-    [platformFilter]
-  );
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [postsRes, socialRes] = await Promise.all([fetch("/api/social/posts"), fetch("/api/social")]);
+      if (postsRes.ok) { const d = await postsRes.json(); setPosts(d.posts || []); }
+      if (socialRes.ok) { const d = await socialRes.json(); setThemes(d.themes || []); }
+    } catch {}
+    setLoading(false);
+  }, []);
 
-  // Calendar calculations
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const startDayOfWeek = getDay(monthStart);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Stats
-  const thisMonthPosts = mockPosts.length;
-  const totalEngagement = mockPosts.reduce((s, p) => s + p.likes + p.comments + p.shares, 0);
-  const engagementRate = thisMonthPosts > 0 ? ((totalEngagement / (thisMonthPosts * 1000)) * 100).toFixed(1) : "0";
-  const totalReach = totalEngagement * 12;
-  const platformCounts = allPlatforms.map((pl) => ({
-    platform: pl,
-    count: mockPosts.filter((p) => p.platform === pl).reduce((s, p) => s + p.likes + p.comments + p.shares, 0),
-  }));
-  const bestPlatform = platformCounts.sort((a, b) => b.count - a.count)[0]?.platform ?? "N/A";
+  const calendarDays = useMemo(() => {
+    const start = startOfMonth(month);
+    const end = endOfMonth(month);
+    const days = eachDayOfInterval({ start, end });
+    const startPad = getDay(start);
+    const padded: (Date | null)[] = Array.from({ length: startPad }, () => null);
+    return [...padded, ...days];
+  }, [month]);
 
-  function togglePlatformCheckbox(pl: Platform) {
-    setNewPlatforms((prev) =>
-      prev.includes(pl) ? prev.filter((p) => p !== pl) : [...prev, pl]
-    );
+  function getPostsForDay(day: Date) {
+    return posts.filter((p) => {
+      const d = p.scheduledAt || p.publishedAt || p.createdAt;
+      return d && isSameDay(new Date(d), day);
+    });
   }
+
+  function getPlatformDot(platform: string) {
+    const p = PLATFORMS.find((pl) => pl.value === platform);
+    return p ? p.color : "#888";
+  }
+
+  async function createPost() {
+    for (const platform of newPlatforms) {
+      await fetch("/api/social/posts", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: newContent, platform, status: newScheduleDate ? "SCHEDULED" : "DRAFT",
+          scheduledAt: newScheduleDate ? new Date(`${newScheduleDate}T${newScheduleTime}`).toISOString() : null,
+          hashtags: JSON.stringify(newHashtags.split(" ").filter(Boolean)),
+        }),
+      });
+    }
+    setShowCreate(false);
+    setNewContent(""); setNewHashtags(""); setNewPlatforms([]);
+    fetchData();
+  }
+
+  function generateAIContent() {
+    const goals: Record<string, string> = {
+      awareness: "Did you know? Our platform helps businesses grow 3x faster. Here's how we're changing the game...",
+      engagement: "Question for our community: What's the biggest challenge you face in your business? Drop your answer below!",
+      traffic: "We just published a comprehensive guide on scaling your business. Link in bio to read the full breakdown.",
+      conversion: "Limited time offer: Get 30% off your first month. Use code GROW30 at checkout. Offer ends Friday!",
+    };
+    setNewContent(goals[newGoal] || goals.engagement);
+    setNewHashtags("#business #growth #strategy #tips #entrepreneur");
+  }
+
+  const filteredPosts = posts.filter((p) => {
+    if (filterPlatform && p.platform !== filterPlatform) return false;
+    if (filterStatus && p.status !== filterStatus) return false;
+    return true;
+  });
+
+  // Analytics data
+  const engagementByPlatform = PLATFORMS.map((pl) => {
+    const platformPosts = posts.filter((p) => p.platform === pl.value && p.status === "PUBLISHED");
+    const totalEng = platformPosts.reduce((sum, p) => {
+      const m = JSON.parse(p.metrics || "{}");
+      return sum + (m.likes || 0) + (m.comments || 0) + (m.shares || 0);
+    }, 0);
+    return { name: pl.label, engagement: totalEng, fill: pl.color };
+  }).filter((d) => d.engagement > 0);
+
+  const totalPosts = posts.filter((p) => p.status === "PUBLISHED").length;
+  const totalReach = posts.reduce((s, p) => { const m = JSON.parse(p.metrics || "{}"); return s + (m.reach || m.impressions || 0); }, 0);
+  const totalEngagement = posts.reduce((s, p) => { const m = JSON.parse(p.metrics || "{}"); return s + (m.likes || 0) + (m.comments || 0) + (m.shares || 0); }, 0);
+
+  // Heatmap: 7 rows × 24 cols
+  const heatmapData = useMemo(() => {
+    const grid = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0));
+    posts.filter((p) => p.status === "PUBLISHED").forEach((p) => {
+      const d = new Date(p.publishedAt || p.createdAt);
+      const day = d.getDay();
+      const hour = d.getHours();
+      const m = JSON.parse(p.metrics || "{}");
+      grid[day][hour] += (m.likes || 0) + (m.comments || 0);
+    });
+    return grid;
+  }, [posts]);
+  const heatmapMax = Math.max(1, ...heatmapData.flat());
+
+  if (loading) return <div className="space-y-4"><Skeleton className="h-8 w-48" /><Skeleton className="h-[400px]" /></div>;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Social Studio</h1>
-          <p className="text-sm text-muted-foreground">Create, schedule, and manage social content across all platforms.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center rounded-md border">
-            <Button
-              variant={viewMode === "calendar" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("calendar")}
-            >
-              <CalendarIcon className="mr-1 h-4 w-4" />
-              Calendar
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("list")}
-            >
-              <ListIcon className="mr-1 h-4 w-4" />
-              List
-            </Button>
-          </div>
-          <Button onClick={() => setDialogOpen(true)}>
-            <PlusIcon className="mr-1 h-4 w-4" />
-            Create Post
-          </Button>
-        </div>
+        <h1 className="text-3xl font-bold tracking-tight">Social Studio</h1>
+        <Button onClick={() => setShowCreate(true)}>Create Post</Button>
       </div>
 
-      {/* Stats bar */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Card className="p-4">
-          <p className="text-xs font-medium text-muted-foreground">Total Posts (This Month)</p>
-          <p className="mt-1 text-2xl font-bold">{thisMonthPosts}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-medium text-muted-foreground">Engagement Rate</p>
-          <p className="mt-1 text-2xl font-bold">{engagementRate}%</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-medium text-muted-foreground">Total Reach</p>
-          <p className="mt-1 text-2xl font-bold">{formatNumber(totalReach)}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-medium text-muted-foreground">Best Platform</p>
-          <p className="mt-1 text-2xl font-bold">{bestPlatform}</p>
-        </Card>
-      </div>
+      <Tabs defaultValue="calendar">
+        <TabsList>
+          <TabsTrigger value="calendar">Calendar</TabsTrigger>
+          <TabsTrigger value="posts">Posts</TabsTrigger>
+          <TabsTrigger value="create">Create</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="themes">Themes</TabsTrigger>
+        </TabsList>
 
-      {/* Platform filter pills */}
-      <div className="flex flex-wrap gap-2">
-        {(["All", ...allPlatforms] as const).map((pl) => {
-          const isActive = platformFilter === pl;
-          return (
-            <button
-              key={pl}
-              onClick={() => setPlatformFilter(pl)}
-              className={cn(
-                "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-                isActive
-                  ? platformFilterStyles[pl]
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              )}
-            >
-              {pl}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Calendar View */}
-      {viewMode === "calendar" && (
-        <Card className="p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
-              <ChevronLeftIcon className="h-4 w-4" />
-            </Button>
-            <h2 className="text-lg font-semibold">{format(currentMonth, "MMMM yyyy")}</h2>
-            <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
-              <ChevronRightIcon className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Day headers */}
-          <div className="grid grid-cols-7 text-center text-xs font-medium text-muted-foreground">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-              <div key={d} className="py-2">{d}</div>
-            ))}
-          </div>
-
-          {/* Day cells */}
-          <div className="grid grid-cols-7 border-t">
-            {/* Empty cells for offset */}
-            {Array.from({ length: startDayOfWeek }).map((_, i) => (
-              <div key={`empty-${i}`} className="min-h-[80px] border-b border-r p-1" />
-            ))}
-            {days.map((day) => {
-              const dayPosts = filteredPosts.filter((p) => isSameDay(p.scheduledDate, day));
-              const today = isToday(day);
-              return (
-                <div
-                  key={day.toISOString()}
-                  className={cn(
-                    "min-h-[80px] cursor-pointer border-b border-r p-1 transition-colors hover:bg-muted/50",
-                    today && "bg-primary/5",
-                    !isSameMonth(day, currentMonth) && "text-muted-foreground/40"
-                  )}
-                  onClick={() => console.log("Selected day:", format(day, "yyyy-MM-dd"), "Posts:", dayPosts.length)}
-                >
-                  <span
-                    className={cn(
-                      "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs",
-                      today && "bg-primary text-primary-foreground font-bold"
-                    )}
-                  >
-                    {format(day, "d")}
-                  </span>
-                  <div className="mt-1 flex flex-wrap gap-0.5">
-                    {dayPosts.slice(0, 4).map((post) => (
-                      <span
-                        key={post.id}
-                        className={cn("h-2 w-2 rounded-full", platformColors[post.platform])}
-                        title={`${post.platform}: ${post.content.slice(0, 40)}...`}
-                      />
-                    ))}
-                    {dayPosts.length > 4 && (
-                      <span className="text-[10px] text-muted-foreground">+{dayPosts.length - 4}</span>
-                    )}
+        {/* CALENDAR */}
+        <TabsContent value="calendar">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <Button variant="outline" size="sm" onClick={() => setMonth(subMonths(month, 1))}>←</Button>
+                <CardTitle>{format(month, "MMMM yyyy")}</CardTitle>
+                <Button variant="outline" size="sm" onClick={() => setMonth(addMonths(month, 1))}>→</Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                  <div key={d} className="bg-muted p-2 text-center text-xs font-medium text-muted-foreground">{d}</div>
+                ))}
+                {calendarDays.map((day, i) => {
+                  if (!day) return <div key={`pad-${i}`} className="bg-background p-2 min-h-[80px]" />;
+                  const dayPosts = getPostsForDay(day);
+                  const isSelected = selectedDay && isSameDay(day, selectedDay);
+                  return (
+                    <button key={i} onClick={() => setSelectedDay(day)}
+                      className={cn("bg-background p-2 min-h-[80px] text-left hover:bg-muted/50 transition-colors",
+                        !isSameMonth(day, month) && "opacity-40",
+                        isToday(day) && "ring-2 ring-primary ring-inset",
+                        isSelected && "bg-primary/5"
+                      )}>
+                      <span className={cn("text-sm", isToday(day) && "font-bold text-primary")}>{format(day, "d")}</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {dayPosts.slice(0, 4).map((p, j) => (
+                          <div key={j} className="h-2 w-2 rounded-full" style={{ backgroundColor: getPlatformDot(p.platform) }} />
+                        ))}
+                        {dayPosts.length > 4 && <span className="text-[10px] text-muted-foreground">+{dayPosts.length - 4}</span>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Platform legend */}
+              <div className="flex gap-4 mt-4 justify-center">
+                {PLATFORMS.map((p) => (
+                  <div key={p.value} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: p.color }} />
+                    {p.label}
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-      )}
-
-      {/* List View */}
-      {viewMode === "list" && (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Platform</TableHead>
-                <TableHead className="w-[300px]">Content</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Scheduled Date</TableHead>
-                <TableHead className="text-right">Likes</TableHead>
-                <TableHead className="text-right">Comments</TableHead>
-                <TableHead className="text-right">Shares</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPosts.map((post) => (
-                <TableRow key={post.id}>
-                  <TableCell>
-                    <span className={cn("font-medium", platformTextColors[post.platform])}>
-                      {post.platform}
-                    </span>
-                  </TableCell>
-                  <TableCell className="max-w-[300px] truncate text-sm">
-                    {post.content}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={statusStyles[post.status]}>{post.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(post.scheduledDate)}
-                  </TableCell>
-                  <TableCell className="text-right">{formatNumber(post.likes)}</TableCell>
-                  <TableCell className="text-right">{formatNumber(post.comments)}</TableCell>
-                  <TableCell className="text-right">{formatNumber(post.shares)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
-      )}
-
-      {/* Create Post Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create New Post</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {/* Platform checkboxes */}
-            <div>
-              <label className="mb-2 block text-sm font-medium">Platforms</label>
-              <div className="flex flex-wrap gap-3">
-                {allPlatforms.map((pl) => (
-                  <label key={pl} className="flex items-center gap-1.5 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={newPlatforms.includes(pl)}
-                      onChange={() => togglePlatformCheckbox(pl)}
-                      className="h-4 w-4 rounded border-input"
-                    />
-                    <span className={platformTextColors[pl]}>{pl}</span>
-                  </label>
                 ))}
               </div>
-            </div>
+              {/* Selected day posts */}
+              {selectedDay && (
+                <div className="mt-4 space-y-2">
+                  <h3 className="font-medium">{format(selectedDay, "EEEE, MMMM d, yyyy")}</h3>
+                  {getPostsForDay(selectedDay).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No posts scheduled for this day.</p>
+                  ) : (
+                    getPostsForDay(selectedDay).map((p) => (
+                      <div key={p.id} className="flex items-center gap-3 rounded-lg border p-3">
+                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: getPlatformDot(p.platform) }} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm truncate">{p.content}</p>
+                          <div className="flex gap-2 mt-1">
+                            <Badge className={statusColors[p.status] || ""}>{p.status}</Badge>
+                            <span className="text-xs text-muted-foreground">{p.scheduledAt ? format(new Date(p.scheduledAt), "h:mm a") : ""}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            {/* Content */}
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <label className="text-sm font-medium">Content</label>
-                <Button variant="outline" size="sm">
-                  <SparklesIcon className="mr-1 h-3 w-3" />
-                  Generate with AI
-                </Button>
-              </div>
-              <Textarea
-                value={newContent}
-                onChange={(e) => setNewContent(e.target.value)}
-                placeholder="Write your post content..."
-                rows={4}
-              />
+        {/* POSTS */}
+        <TabsContent value="posts">
+          <div className="space-y-4">
+            <div className="flex gap-3">
+              <Select value={filterPlatform} onChange={(v) => setFilterPlatform(v)} placeholder="All Platforms" options={[{ label: "All Platforms", value: "" }, ...PLATFORMS.map((p) => ({ label: p.label, value: p.value }))]} />
+              <Select value={filterStatus} onChange={(v) => setFilterStatus(v)} placeholder="All Statuses" options={[{ label: "All", value: "" }, { label: "Draft", value: "DRAFT" }, { label: "Scheduled", value: "SCHEDULED" }, { label: "Published", value: "PUBLISHED" }, { label: "Failed", value: "FAILED" }]} />
             </div>
-
-            {/* Schedule & Status row */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-2 block text-sm font-medium">Schedule Date & Time</label>
-                <Input
-                  type="datetime-local"
-                  value={newSchedule}
-                  onChange={(e) => setNewSchedule(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">Status</label>
-                <Select
-                  value={newStatus}
-                  onChange={(v) => setNewStatus(v)}
-                  options={[
-                    { label: "Draft", value: "Draft" },
-                    { label: "Scheduled", value: "Scheduled" },
-                  ]}
-                />
-              </div>
-            </div>
-
-            {/* CTA */}
-            <div>
-              <label className="mb-2 block text-sm font-medium">Call to Action</label>
-              <Input
-                value={newCta}
-                onChange={(e) => setNewCta(e.target.value)}
-                placeholder="e.g. Learn more, Sign up today"
-              />
-            </div>
-
-            {/* Hashtags */}
-            <div>
-              <label className="mb-2 block text-sm font-medium">Hashtags</label>
-              <Input
-                value={newHashtags}
-                onChange={(e) => setNewHashtags(e.target.value)}
-                placeholder="#marketing #growth #saas"
-              />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredPosts.map((p) => {
+                const metrics = JSON.parse(p.metrics || "{}");
+                return (
+                  <Card key={p.id} className="hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <Badge className={cn("text-white text-xs", PLATFORMS.find((pl) => pl.value === p.platform)?.bg || "bg-gray-500")}>{p.platform}</Badge>
+                        <Badge className={statusColors[p.status] || ""}>{p.status}</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <p className="text-sm line-clamp-3">{p.content}</p>
+                      {p.status === "PUBLISHED" && (
+                        <div className="flex gap-3 text-xs text-muted-foreground pt-1 border-t">
+                          <span>♥ {formatNumber(metrics.likes || 0)}</span>
+                          <span>💬 {formatNumber(metrics.comments || 0)}</span>
+                          <span>🔄 {formatNumber(metrics.shares || 0)}</span>
+                        </div>
+                      )}
+                      <p className="text-xs text-muted-foreground">{p.scheduledAt ? `Scheduled: ${formatDate(p.scheduledAt)}` : formatDate(p.createdAt)}</p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+              {filteredPosts.length === 0 && <p className="text-muted-foreground col-span-3 text-center py-8">No posts found</p>}
             </div>
           </div>
+        </TabsContent>
 
+        {/* CREATE */}
+        <TabsContent value="create">
+          <Card>
+            <CardHeader><CardTitle>Create Post</CardTitle></CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Platforms</label>
+                <div className="flex flex-wrap gap-2">
+                  {PLATFORMS.map((p) => (
+                    <button key={p.value} onClick={() => setNewPlatforms((prev) => prev.includes(p.value) ? prev.filter((x) => x !== p.value) : [...prev, p.value])}
+                      className={cn("px-3 py-1.5 rounded-full text-sm border transition-colors", newPlatforms.includes(p.value) ? `${p.bg} text-white border-transparent` : "border-border hover:bg-muted")}>
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Content Goal</label>
+                <div className="flex gap-2">
+                  {["awareness", "engagement", "traffic", "conversion"].map((g) => (
+                    <button key={g} onClick={() => setNewGoal(g)}
+                      className={cn("px-3 py-1.5 rounded-lg text-sm border capitalize transition-colors", newGoal === g ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm font-medium">Content</label>
+                  <Button size="sm" variant="outline" onClick={generateAIContent}>Generate with AI</Button>
+                </div>
+                <Textarea rows={5} value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="Write your post..." />
+                <div className="flex gap-2 mt-1">
+                  {newPlatforms.map((p) => (
+                    <span key={p} className={cn("text-xs", newContent.length > (CHAR_LIMITS[p] || 999) ? "text-red-500" : "text-muted-foreground")}>
+                      {p}: {newContent.length}/{CHAR_LIMITS[p]}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Hashtags</label>
+                <Input value={newHashtags} onChange={(e) => setNewHashtags(e.target.value)} placeholder="#marketing #growth #tips" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className="text-sm font-medium">Schedule Date</label><Input type="date" value={newScheduleDate} onChange={(e) => setNewScheduleDate(e.target.value)} /></div>
+                <div><label className="text-sm font-medium">Time</label><Input type="time" value={newScheduleTime} onChange={(e) => setNewScheduleTime(e.target.value)} /></div>
+              </div>
+              {/* Platform previews */}
+              {newContent && newPlatforms.length > 0 && (
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Preview</label>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {newPlatforms.map((p) => {
+                      const pl = PLATFORMS.find((x) => x.value === p)!;
+                      return (
+                        <div key={p} className="rounded-lg border p-3 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className={cn("h-6 w-6 rounded-full flex items-center justify-center text-white text-xs", pl.bg)}>{pl.label[0]}</div>
+                            <span className="text-sm font-medium">{pl.label}</span>
+                          </div>
+                          <p className="text-sm" style={{ maxHeight: "80px", overflow: "hidden" }}>{newContent}</p>
+                          {newHashtags && <p className="text-xs text-blue-500">{newHashtags}</p>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => createPost()}>Save Draft</Button>
+                <Button onClick={createPost} disabled={!newContent || newPlatforms.length === 0}>Schedule</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ANALYTICS */}
+        <TabsContent value="analytics">
+          <div className="space-y-6">
+            <div className="grid grid-cols-4 gap-4">
+              <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Published Posts</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{totalPosts}</div></CardContent></Card>
+              <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Reach</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatNumber(totalReach)}</div></CardContent></Card>
+              <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Engagement</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatNumber(totalEngagement)}</div></CardContent></Card>
+              <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Avg Engagement Rate</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{totalReach ? ((totalEngagement / totalReach) * 100).toFixed(1) : 0}%</div></CardContent></Card>
+            </div>
+            {engagementByPlatform.length > 0 && (
+              <Card>
+                <CardHeader><CardTitle>Engagement by Platform</CardTitle></CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={engagementByPlatform}>
+                      <XAxis dataKey="name" /><YAxis /><Tooltip />
+                      <Bar dataKey="engagement" radius={[4, 4, 0, 0]}>
+                        {engagementByPlatform.map((d, i) => <rect key={i} fill={d.fill} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            )}
+            <Card>
+              <CardHeader><CardTitle>Posting Time Heatmap</CardTitle></CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <div className="grid gap-px" style={{ gridTemplateColumns: "60px repeat(24, 1fr)" }}>
+                    <div />
+                    {Array.from({ length: 24 }, (_, h) => <div key={h} className="text-[10px] text-center text-muted-foreground">{h}</div>)}
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, di) => (
+                      <React.Fragment key={day}>
+                        <div className="text-xs text-muted-foreground flex items-center">{day}</div>
+                        {heatmapData[di].map((val, hi) => (
+                          <div key={hi} className="h-6 rounded-sm" style={{ backgroundColor: `rgba(37, 99, 235, ${val / heatmapMax})` }} title={`${day} ${hi}:00 - ${val} engagements`} />
+                        ))}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* THEMES */}
+        <TabsContent value="themes">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {themes.map((t) => (
+              <Card key={t.id} className="border-l-4" style={{ borderLeftColor: t.color }}>
+                <CardHeader className="pb-2"><CardTitle className="text-base">{t.name}</CardTitle></CardHeader>
+                <CardContent className="space-y-2">
+                  <p className="text-sm text-muted-foreground">{t.description || "No description"}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Content ratio:</span>
+                    <Progress value={t.contentRatio * 100} className="h-2 flex-1" />
+                    <span className="text-xs font-medium">{Math.round(t.contentRatio * 100)}%</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t._count?.posts || 0} posts</p>
+                </CardContent>
+              </Card>
+            ))}
+            {themes.length === 0 && <p className="text-muted-foreground col-span-3 text-center py-8">No content themes yet</p>}
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* CREATE POST DIALOG */}
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Quick Post</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <Select value={newPlatforms[0] || ""} onChange={(v) => setNewPlatforms([v as Platform])} placeholder="Platform" options={PLATFORMS.map((p) => ({ label: p.label, value: p.value }))} />
+            <Textarea rows={4} value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="Post content..." />
+            <Input type="datetime-local" value={newScheduleDate ? `${newScheduleDate}T${newScheduleTime}` : ""} onChange={(e) => { const [d, t] = e.target.value.split("T"); setNewScheduleDate(d); setNewScheduleTime(t || "10:00"); }} />
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => { console.log("Creating post..."); setDialogOpen(false); }}>
-              Create Post
-            </Button>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button onClick={createPost} disabled={!newContent || newPlatforms.length === 0}>Create</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-// --- Inline Icons ---
-function CalendarIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <rect width="18" height="18" x="3" y="4" rx="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" />
-    </svg>
-  );
-}
-
-function ListIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <line x1="8" x2="21" y1="6" y2="6" /><line x1="8" x2="21" y1="12" y2="12" /><line x1="8" x2="21" y1="18" y2="18" /><line x1="3" x2="3.01" y1="6" y2="6" /><line x1="3" x2="3.01" y1="12" y2="12" /><line x1="3" x2="3.01" y1="18" y2="18" />
-    </svg>
-  );
-}
-
-function PlusIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M5 12h14" /><path d="M12 5v14" />
-    </svg>
-  );
-}
-
-function ChevronLeftIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="m15 18-6-6 6-6" />
-    </svg>
-  );
-}
-
-function ChevronRightIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="m9 18 6-6-6-6" />
-    </svg>
-  );
-}
-
-function SparklesIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-      <path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" />
-    </svg>
   );
 }
