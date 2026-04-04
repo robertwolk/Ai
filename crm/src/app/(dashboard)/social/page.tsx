@@ -13,6 +13,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { cn, formatNumber, formatDate } from "@/lib/utils";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function safeJSON(val: any): Record<string, any> {
+  if (typeof val === "object" && val !== null) return val;
+  try { return JSON.parse(val || "{}"); } catch { return {}; }
+}
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 type Platform = "INSTAGRAM" | "FACEBOOK" | "X" | "TIKTOK" | "LINKEDIN" | "YOUTUBE";
@@ -119,15 +125,15 @@ export default function SocialPage() {
   const engagementByPlatform = PLATFORMS.map((pl) => {
     const platformPosts = posts.filter((p) => p.platform === pl.value && p.status === "PUBLISHED");
     const totalEng = platformPosts.reduce((sum, p) => {
-      const m = JSON.parse(p.metrics || "{}");
+      const m = safeJSON(p.metrics);
       return sum + (m.likes || 0) + (m.comments || 0) + (m.shares || 0);
     }, 0);
     return { name: pl.label, engagement: totalEng, fill: pl.color };
   }).filter((d) => d.engagement > 0);
 
   const totalPosts = posts.filter((p) => p.status === "PUBLISHED").length;
-  const totalReach = posts.reduce((s, p) => { const m = JSON.parse(p.metrics || "{}"); return s + (m.reach || m.impressions || 0); }, 0);
-  const totalEngagement = posts.reduce((s, p) => { const m = JSON.parse(p.metrics || "{}"); return s + (m.likes || 0) + (m.comments || 0) + (m.shares || 0); }, 0);
+  const totalReach = posts.reduce((s, p) => { const m = safeJSON(p.metrics); return s + (m.reach || m.impressions || 0); }, 0);
+  const totalEngagement = posts.reduce((s, p) => { const m = safeJSON(p.metrics); return s + (m.likes || 0) + (m.comments || 0) + (m.shares || 0); }, 0);
 
   // Heatmap: 7 rows × 24 cols
   const heatmapData = useMemo(() => {
@@ -136,7 +142,7 @@ export default function SocialPage() {
       const d = new Date(p.publishedAt || p.createdAt);
       const day = d.getDay();
       const hour = d.getHours();
-      const m = JSON.parse(p.metrics || "{}");
+      const m = safeJSON(p.metrics);
       grid[day][hour] += (m.likes || 0) + (m.comments || 0);
     });
     return grid;
@@ -242,7 +248,7 @@ export default function SocialPage() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredPosts.map((p) => {
-                const metrics = JSON.parse(p.metrics || "{}");
+                const metrics = safeJSON(p.metrics);
                 return (
                   <Card key={p.id} className="hover:shadow-md transition-shadow">
                     <CardHeader className="pb-2">

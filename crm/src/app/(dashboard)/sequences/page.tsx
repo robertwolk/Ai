@@ -189,7 +189,7 @@ export default function SequencesPage() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {sequences.map((seq) => {
-                const parsedSteps = (() => { try { return JSON.parse(seq.steps); } catch { return []; } })();
+                const parsedSteps = (() => { try { return typeof seq.steps === "object" ? seq.steps : JSON.parse(seq.steps); } catch { return []; } })();
                 return (
                   <Card key={seq.id} className="hover:shadow-md transition-shadow">
                     <CardHeader className="pb-2">
@@ -327,7 +327,7 @@ export default function SequencesPage() {
                   </TableHeader>
                   <TableBody>
                     {enrollments.map((e) => {
-                      const totalSteps = (() => { try { return JSON.parse(e.sequence.steps).length; } catch { return 0; } })();
+                      const totalSteps = (() => { try { const s = typeof e.sequence.steps === "object" ? e.sequence.steps : JSON.parse(e.sequence.steps); return Array.isArray(s) ? s.length : 0; } catch { return 0; } })();
                       return (
                         <TableRow key={e.id}>
                           <TableCell>

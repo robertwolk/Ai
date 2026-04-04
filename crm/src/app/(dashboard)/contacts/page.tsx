@@ -272,12 +272,8 @@ export default function ContactsPage() {
   function openEditDialog(contact: Contact) {
     setEditingContact(contact);
     let tagsStr = "";
-    try {
-      const parsed = JSON.parse(contact.tags || "[]");
-      tagsStr = Array.isArray(parsed) ? parsed.join(", ") : "";
-    } catch {
-      tagsStr = "";
-    }
+    const parsed = typeof contact.tags === "object" ? contact.tags : (() => { try { return JSON.parse(contact.tags || "[]"); } catch { return []; } })();
+    tagsStr = Array.isArray(parsed) ? parsed.join(", ") : "";
     setForm({
       firstName: contact.firstName,
       lastName: contact.lastName,

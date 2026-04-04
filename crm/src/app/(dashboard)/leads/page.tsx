@@ -12,6 +12,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function safeJSON(val: any, fallback: any = {}): any {
+  if (typeof val === "object" && val !== null) return val;
+  try { return JSON.parse(val || JSON.stringify(fallback)); } catch { return fallback; }
+}
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 const gradeColors: Record<string, string> = { A: "bg-emerald-100 text-emerald-800", B: "bg-blue-100 text-blue-800", C: "bg-amber-100 text-amber-800", D: "bg-red-100 text-red-800" };
@@ -116,7 +122,7 @@ export default function LeadsPage() {
     if (filterGrade && l.grade !== filterGrade) return false;
     if (filterStatus && l.status !== filterStatus) return false;
     if (searchTerm) {
-      const raw = JSON.parse(l.rawData || "{}");
+      const raw = safeJSON(l.rawData);
       const search = searchTerm.toLowerCase();
       if (!(raw.name || "").toLowerCase().includes(search) && !(raw.company || "").toLowerCase().includes(search) && !(raw.email || "").toLowerCase().includes(search)) return false;
     }
@@ -370,7 +376,7 @@ export default function LeadsPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredLeads.map((l) => {
-                      const raw = JSON.parse(l.rawData || "{}");
+                      const raw = safeJSON(l.rawData);
                       return (
                         <TableRow key={l.id}>
                           <TableCell className="font-medium">{raw.name || "—"}</TableCell>
