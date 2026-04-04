@@ -417,6 +417,13 @@ export default function DashboardPage() {
 
   if (!data) return null;
 
+  // Safe defaults for arrays
+  data.pipelineByStage = data.pipelineByStage || [];
+  data.leadsBySource = data.leadsBySource || [];
+  data.revenueByMonth = data.revenueByMonth || [];
+  data.recentActivities = data.recentActivities || [];
+  data.topDeals = data.topDeals || [];
+
   // Build KPI stats
   const kpiCards = [
     {
@@ -458,13 +465,13 @@ export default function DashboardPage() {
   ];
 
   // Prepare pipeline data with colors
-  const pipelineData = data.pipelineByStage.map((item) => ({
+  const pipelineData = (data.pipelineByStage || []).map((item) => ({
     ...item,
     fill: PIPELINE_COLORS[item.stage] ?? "#94a3b8",
   }));
 
   // Prepare pie data
-  const pieData = data.leadsBySource.map((item, idx) => ({
+  const pieData = (data.leadsBySource || []).map((item, idx) => ({
     name: item.source,
     value: item.count,
     fill: PIE_COLORS[idx % PIE_COLORS.length],
@@ -705,7 +712,7 @@ export default function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.topDeals.map((deal) => (
+                {(data.topDeals || []).map((deal) => (
                   <TableRow key={deal.id} className="cursor-pointer">
                     <TableCell>
                       <Link href={`/deals/${deal.id}`} className="font-medium hover:text-primary hover:underline">
