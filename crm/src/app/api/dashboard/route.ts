@@ -128,16 +128,29 @@ export async function GET() {
       dealVelocity = Math.round(totalDays / wonDealsWithDates.length);
     }
 
+    // Convert objects to arrays for the frontend
+    const pipelineByStageArr = Object.entries(pipelineByStage).map(
+      ([stage, { count, totalValue }]) => ({ stage, count, totalValue })
+    );
+
+    const revenueByMonthArr = Object.entries(revenueByMonth).map(
+      ([month, revenue]) => ({ month, revenue })
+    );
+
+    const leadsBySourceArr = Object.entries(leadsBySource).map(
+      ([source, count]) => ({ source, count })
+    );
+
     return NextResponse.json({
       totalRevenue,
       activeDeals,
       newContacts: newContactsCount,
       conversionRate: Math.round(conversionRate * 100) / 100,
-      pipelineByStage,
+      pipelineByStage: pipelineByStageArr,
       recentActivities,
       topDeals,
-      revenueByMonth,
-      leadsBySource,
+      revenueByMonth: revenueByMonthArr,
+      leadsBySource: leadsBySourceArr,
       dealVelocity,
     });
   } catch (error) {
