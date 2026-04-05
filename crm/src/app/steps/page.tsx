@@ -291,14 +291,16 @@ export default function StepsPage() {
   // Step helpers
   const cycleStatus = (stepNum: number) => {
     const current = stepsData[stepNum]?.status || 'not_started'
-    const next = current === 'not_started' ? 'working' : current === 'working' ? 'completed' : 'not_started'
-    const updated = { ...stepsData, [stepNum]: { ...stepsData[stepNum], status: next, notes: stepsData[stepNum]?.notes || '' } }
-    updateStepsData(updated)
+    const next: StepData['status'] = current === 'not_started' ? 'working' : current === 'working' ? 'completed' : 'not_started'
+    const entry: StepData = { status: next, notes: stepsData[stepNum]?.notes || '' }
+    const updated = { ...stepsData, [stepNum]: entry }
+    updateStepsData(updated as Record<number, StepData>)
   }
 
   const updateNotes = (stepNum: number, notes: string) => {
-    const updated = { ...stepsData, [stepNum]: { ...stepsData[stepNum], status: stepsData[stepNum]?.status || 'not_started', notes } }
-    updateStepsData(updated)
+    const entry: StepData = { status: stepsData[stepNum]?.status || 'not_started', notes }
+    const updated = { ...stepsData, [stepNum]: entry }
+    updateStepsData(updated as Record<number, StepData>)
   }
 
   // Sponsor helpers
