@@ -40,6 +40,8 @@ interface Theme { id: string; name: string; description: string; color: string; 
 export default function SocialPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [themes, setThemes] = useState<Theme[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [socialAccounts, setSocialAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -60,7 +62,7 @@ export default function SocialPage() {
     try {
       const [postsRes, socialRes] = await Promise.all([fetch("/api/social/posts"), fetch("/api/social")]);
       if (postsRes.ok) { const d = await postsRes.json(); setPosts(d.posts || []); }
-      if (socialRes.ok) { const d = await socialRes.json(); setThemes(d.themes || []); }
+      if (socialRes.ok) { const d = await socialRes.json(); setThemes(d.themes || []); setSocialAccounts(d.accounts || []); }
     } catch {}
     setLoading(false);
   }, []);
@@ -90,9 +92,12 @@ export default function SocialPage() {
 
   async function createPost() {
     for (const platform of newPlatforms) {
+      const account = socialAccounts.find((a) => a.platform === platform) || socialAccounts[0];
+      if (!account) continue;
       await fetch("/api/social/posts", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          socialAccountId: account.id,
           content: newContent, platform, status: newScheduleDate ? "SCHEDULED" : "DRAFT",
           scheduledAt: newScheduleDate ? new Date(`${newScheduleDate}T${newScheduleTime}`).toISOString() : null,
           hashtags: JSON.stringify(newHashtags.split(" ").filter(Boolean)),

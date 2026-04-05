@@ -13,7 +13,7 @@ export async function GET() {
       actions: JSON.parse(rule.actions),
     }));
 
-    return NextResponse.json(parsed);
+    return NextResponse.json({ rules: parsed });
   } catch (error) {
     console.error("Error fetching optimization rules:", error);
     return NextResponse.json(

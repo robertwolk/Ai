@@ -33,7 +33,7 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(campaignsWithAggregates);
+    return NextResponse.json({ campaigns: campaignsWithAggregates });
   } catch (error) {
     console.error("Error fetching campaigns:", error);
     return NextResponse.json(

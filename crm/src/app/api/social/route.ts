@@ -78,7 +78,7 @@ export async function GET() {
         totalReach,
         totalImpressions,
       },
-      contentThemes: themesWithStats,
+      themes: themesWithStats,
     });
   } catch (error) {
     console.error("Error fetching social dashboard:", error);

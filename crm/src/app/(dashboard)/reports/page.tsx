@@ -11,7 +11,7 @@ import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cart
 
 interface DashData {
   totalRevenue: number; activeDeals: number; newContacts: number; conversionRate: number;
-  pipelineByStage: { stage: string; count: number; value: number }[];
+  pipelineByStage: { stage: string; count: number; totalValue: number }[];
   revenueByMonth: { month: string; revenue: number }[];
   leadsBySource: { source: string; count: number }[];
   dealVelocity: number;
@@ -64,7 +64,7 @@ export default function ReportsPage() {
   const funnelMax = Math.max(1, ...funnelData.map((s) => s.count));
   const forecastValue = (d?.pipelineByStage || []).reduce((sum, s) => {
     const prob = s.stage === "WON" ? 1 : s.stage === "NEGOTIATION" ? 0.8 : s.stage === "PROPOSAL_SENT" ? 0.6 : s.stage === "MEETING_BOOKED" ? 0.4 : s.stage === "QUALIFIED" ? 0.2 : 0.05;
-    return sum + s.value * prob;
+    return sum + (s.totalValue || 0) * prob;
   }, 0);
 
   return (
@@ -105,7 +105,7 @@ export default function ReportsPage() {
             </CardContent></Card>
             <Card><CardHeader><CardTitle>Pipeline Funnel</CardTitle></CardHeader><CardContent className="space-y-3">
               {funnelData.map((s, i) => (
-                <div key={s.stage} className="space-y-1"><div className="flex justify-between text-sm"><span className="font-medium">{s.stage.replace(/_/g, " ")}</span><span className="text-muted-foreground">{s.count} deals · {formatCurrency(s.value)}</span></div>
+                <div key={s.stage} className="space-y-1"><div className="flex justify-between text-sm"><span className="font-medium">{s.stage.replace(/_/g, " ")}</span><span className="text-muted-foreground">{s.count} deals · {formatCurrency(s.totalValue)}</span></div>
                   <div className="h-8 rounded flex items-center px-3" style={{ width: `${Math.max((s.count / funnelMax) * 100, 15)}%`, backgroundColor: STAGE_COLORS[i] || "#94a3b8" }}><span className="text-xs text-white font-medium">{s.count}</span></div></div>
               ))}
             </CardContent></Card>

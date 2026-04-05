@@ -41,7 +41,7 @@ interface DashboardData {
   activeDeals: number;
   newContacts: number;
   conversionRate: number;
-  pipelineByStage: { stage: string; count: number; value: number }[];
+  pipelineByStage: { stage: string; count: number; totalValue: number }[];
   recentActivities: {
     id: string;
     type: string;
@@ -270,7 +270,7 @@ function PipelineTooltip({ active, payload, label }: any) {
       <p className="mb-1 text-sm font-medium text-muted-foreground">{label}</p>
       <p className="text-sm"><span className="font-bold">{payload[0].value}</span> deals</p>
       {payload[0]?.payload?.value != null && (
-        <p className="text-xs text-muted-foreground">{formatCurrency(payload[0].payload.value)} total value</p>
+        <p className="text-xs text-muted-foreground">{formatCurrency(payload[0].payload.totalValue)} total value</p>
       )}
     </div>
   );

@@ -3,14 +3,27 @@ import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const sequences = await prisma.emailSequence.findMany({
-      include: {
-        _count: {
-          select: { enrollments: true },
+    const [sequences, enrollments] = await Promise.all([
+      prisma.emailSequence.findMany({
+        include: {
+          _count: {
+            select: { enrollments: true },
+          },
         },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.emailSequenceEnrollment.findMany({
+        include: {
+          contact: {
+            select: { id: true, firstName: true, lastName: true, email: true },
+          },
+          sequence: {
+            select: { id: true, name: true, steps: true },
+          },
+        },
+        orderBy: { enrolledAt: "desc" },
+      }),
+    ]);
 
     const parsed = sequences.map((seq) => ({
       ...seq,
@@ -19,7 +32,7 @@ export async function GET() {
       _count: undefined,
     }));
 
-    return NextResponse.json(parsed);
+    return NextResponse.json({ sequences: parsed, enrollments });
   } catch (error) {
     console.error("Error fetching email sequences:", error);
     return NextResponse.json(
