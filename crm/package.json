@@ -4,13 +4,17 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:push-turso": "node scripts/push-turso.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@hello-pangea/dnd": "^18.0.1",
+    "@libsql/client": "^0.17.2",
+    "@prisma/adapter-libsql": "^5.22.0",
     "@prisma/client": "^5.22.0",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.3",
