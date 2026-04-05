@@ -8,25 +8,25 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
   title: 'CRM AI Hub',
-    description: 'AI-powered CRM with integrated advertising, social media, and lead generation',
-      icons: {
-          icon: '/favicon.ico',
-            },
-            }
+  description: 'AI-powered CRM with integrated advertising, social media, and lead generation',
+  icons: {
+    icon: '/favicon.ico',
+  },
+}
 
-            export default function RootLayout({
-              children,
-              }: {
-                children: React.ReactNode
-                }) {
-                  return (
-                      <html lang="en" suppressHydrationWarning>
-                            <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
-                                    <Providers>
-                                              {children}
-                                                        <Toaster />
-                                                                </Providers>
-                                                                      </body>
-                                                                          </html>
-                                                                            )
-                                                                            }
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
+        <Providers>
+          {children}
+          <Toaster />
+        </Providers>
+      </body>
+    </html>
+  )
+}
