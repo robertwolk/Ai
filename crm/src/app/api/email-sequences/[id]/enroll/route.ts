@@ -8,11 +8,21 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { contactIds } = body;
+    let { contactIds } = body;
+    const { emails } = body;
+
+    // Support enrollment by email addresses
+    if ((!contactIds || contactIds.length === 0) && emails && Array.isArray(emails) && emails.length > 0) {
+      const contacts = await prisma.contact.findMany({
+        where: { email: { in: emails } },
+        select: { id: true },
+      });
+      contactIds = contacts.map((c) => c.id);
+    }
 
     if (!contactIds || !Array.isArray(contactIds) || contactIds.length === 0) {
       return NextResponse.json(
-        { error: "contactIds array is required" },
+        { error: "contactIds array or emails array is required" },
         { status: 400 }
       );
     }
