@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Middle East News Alert Monitor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0a0a0f;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a0a0a 0%, #0a0a1a 50%, #0a1a0a 100%);
+            border-bottom: 2px solid #ff2a2a;
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #ff4444;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .header h1 span { color: #ffaa00; }
+        .pulse-dot {
+            width: 12px; height: 12px;
+            background: #ff2a2a;
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,42,42,0.7); }
+            50% { opacity: 0.7; box-shadow: 0 0 0 10px rgba(255,42,42,0); }
+        }
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            font-size: 0.85rem;
+            color: #888;
+        }
+        .status-bar .stat { display: flex; align-items: center; gap: 5px; }
+        .status-bar .stat strong { color: #ffaa00; font-size: 1rem; }
+
+        /* Controls */
+        .controls {
+            padding: 15px 30px;
+            background: #0d0d15;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #1a1a2e;
+        }
+        .controls label { font-size: 0.85rem; color: #888; }
+        .controls select, .controls input[type="number"] {
+            background: #1a1a2e;
+            color: #e0e0e0;
+            border: 1px solid #333;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: #ff2a2a; color: #fff; }
+        .btn-primary:hover { background: #ff4444; transform: translateY(-1px); }
+        .btn-secondary { background: #1a1a2e; color: #aaa; border: 1px solid #333; }
+        .btn-secondary:hover { background: #222240; color: #fff; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Sound toggle */
+        .sound-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #888;
+        }
+        .sound-toggle input { accent-color: #ff2a2a; }
+
+        /* Main content */
+        .main { padding: 20px 30px; }
+
+        /* Alert cards */
+        .alert-card {
+            background: #111118;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            transition: all 0.3s;
+            animation: slideIn 0.4s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .alert-card:hover { transform: translateX(3px); }
+
+        .alert-card.critical {
+            border-left: 4px solid #ff2a2a;
+            box-shadow: 0 0 20px rgba(255,42,42,0.15);
+        }
+        .alert-card.high {
+            border-left: 4px solid #ffaa00;
+            box-shadow: 0 0 15px rgba(255,170,0,0.1);
+        }
+        .alert-card.medium {
+            border-left: 4px solid #00bfff;
+        }
+        .alert-card.low {
+            border-left: 4px solid #555;
+        }
+
+        .alert-card .card-header {
+            padding: 15px 20px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .alert-card .card-header h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            line-height: 1.4;
+            flex: 1;
+        }
+        .alert-card.critical .card-header h3 { color: #ff6666; }
+        .alert-card.high .card-header h3 { color: #ffcc44; }
+        .alert-card.medium .card-header h3 { color: #44ccff; }
+        .alert-card.low .card-header h3 { color: #999; }
+
+        .score-badge {
+            flex-shrink: 0;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .alert-card.critical .score-badge { background: rgba(255,42,42,0.2); color: #ff4444; }
+        .alert-card.high .score-badge { background: rgba(255,170,0,0.2); color: #ffaa00; }
+        .alert-card.medium .score-badge { background: rgba(0,191,255,0.2); color: #00bfff; }
+        .alert-card.low .score-badge { background: rgba(100,100,100,0.2); color: #888; }
+
+        .card-body {
+            padding: 0 20px 12px;
+        }
+        .card-body .summary {
+            font-size: 0.9rem;
+            color: #999;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        .card-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+            color: #666;
+        }
+        .card-meta a { color: #5588ff; text-decoration: none; }
+        .card-meta a:hover { text-decoration: underline; }
+        .card-meta .source-tag {
+            background: #1a1a2e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #aaa;
+        }
+        .card-meta .keywords {
+            color: #ff8844;
+        }
+
+        /* Breaking news flash */
+        .breaking-flash {
+            display: none;
+            background: linear-gradient(90deg, #ff2a2a, #ff6600, #ff2a2a);
+            background-size: 200% 100%;
+            animation: flashGradient 1s linear infinite;
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 0.9rem;
+        }
+        .breaking-flash.active { display: block; }
+        @keyframes flashGradient {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #555;
+        }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 15px; }
+        .empty-state h3 { font-size: 1.2rem; margin-bottom: 8px; color: #777; }
+        .empty-state p { font-size: 0.9rem; }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 18px; height: 18px;
+            border: 2px solid #333;
+            border-top-color: #ff2a2a;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .header { padding: 15px; }
+            .header h1 { font-size: 1.1rem; }
+            .controls { padding: 10px 15px; }
+            .main { padding: 15px; }
+            .card-header { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="breaking-flash" id="breakingFlash">
+    BREAKING NEWS ALERT
+</div>
+
+<div class="header">
+    <div class="header-left">
+        <div class="pulse-dot" id="pulseDot"></div>
+        <h1>Middle East <span>News Alert</span></h1>
+    </div>
+    <div class="status-bar" id="statusBar">
+        <div class="stat">Alerts: <strong id="totalAlerts">0</strong></div>
+        <div class="stat">Scanned: <strong id="totalScanned">0</strong></div>
+        <div class="stat">Cycle: <strong id="cycleNum">0</strong></div>
+        <div class="stat" id="lastUpdate">Waiting...</div>
+    </div>
+</div>
+
+<div class="controls">
+    <label>Threshold:</label>
+    <input type="number" id="threshold" value="30" min="0" max="100" step="5" style="width:70px;">
+
+    <label>Filter:</label>
+    <select id="filter">
+        <option value="all">All Alerts</option>
+        <option value="critical">Critical (70+)</option>
+        <option value="high">High (50+)</option>
+        <option value="medium">Medium (30+)</option>
+    </select>
+
+    <button class="btn btn-primary" id="scanBtn" onclick="fetchNow()">
+        Scan Now
+    </button>
+    <button class="btn btn-secondary" id="autoBtn" onclick="toggleAuto()">
+        Auto: OFF
+    </button>
+
+    <label class="sound-toggle">
+        <input type="checkbox" id="soundToggle" checked> Sound alerts
+    </label>
+</div>
+
+<div class="main" id="alertContainer">
+    <div class="empty-state" id="emptyState">
+        <div class="icon">&#x1F4E1;</div>
+        <h3>Monitoring Middle East News Feeds</h3>
+        <p>Click <strong>Scan Now</strong> to fetch the latest articles, or enable <strong>Auto</strong> for continuous monitoring.</p>
+    </div>
+</div>
+
+<script>
+    let allAlerts = [];
+    let autoInterval = null;
+    let totalScanned = 0;
+    let cycleNum = 0;
+
+    // Notification sound (short beep via Web Audio API)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playAlertSound() {
+        if (!document.getElementById('soundToggle').checked) return;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.frequency.value = 880;
+        o.type = 'sine';
+        g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+        o.start(audioCtx.currentTime);
+        o.stop(audioCtx.currentTime + 0.5);
+    }
+
+    function playBreakingSound() {
+        if (!document.getElementById('soundToggle').checked) return;
+        [0, 0.2, 0.4].forEach(delay => {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.connect(g); g.connect(audioCtx.destination);
+            o.frequency.value = 1200;
+            o.type = 'square';
+            g.gain.setValueAtTime(0.2, audioCtx.currentTime + delay);
+            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + 0.15);
+            o.start(audioCtx.currentTime + delay);
+            o.stop(audioCtx.currentTime + delay + 0.15);
+        });
+    }
+
+    function getLevel(score) {
+        if (score >= 70) return 'critical';
+        if (score >= 50) return 'high';
+        if (score >= 30) return 'medium';
+        return 'low';
+    }
+
+    function renderAlerts() {
+        const filter = document.getElementById('filter').value;
+        const container = document.getElementById('alertContainer');
+        const empty = document.getElementById('emptyState');
+
+        let filtered = allAlerts;
+        if (filter === 'critical') filtered = allAlerts.filter(a => a.score >= 70);
+        else if (filter === 'high') filtered = allAlerts.filter(a => a.score >= 50);
+        else if (filter === 'medium') filtered = allAlerts.filter(a => a.score >= 30);
+
+        if (filtered.length === 0) {
+            container.innerHTML = '';
+            container.appendChild(empty);
+            empty.style.display = 'block';
+            return;
+        }
+
+        empty.style.display = 'none';
+        container.innerHTML = filtered.map(a => {
+            const level = getLevel(a.score);
+            const time = a.published ? new Date(a.published).toLocaleString() : 'Unknown';
+            return `
+                <div class="alert-card ${level}">
+                    <div class="card-header">
+                        <h3><a href="${a.link}" target="_blank" style="color:inherit;text-decoration:none;">${a.title}</a></h3>
+                        <span class="score-badge">${a.score}/100</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="summary">${a.summary ? a.summary.substring(0, 300) : ''}</div>
+                        <div class="card-meta">
+                            <span class="source-tag">${a.source}</span>
+                            <span>${time}</span>
+                            <span class="keywords">${a.matched_keywords.slice(0,6).join(', ')}</span>
+                            <a href="${a.link}" target="_blank">Read full article</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function fetchNow() {
+        const btn = document.getElementById('scanBtn');
+        const threshold = document.getElementById('threshold').value;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Scanning...';
+
+        try {
+            const resp = await fetch(`/api/scan?threshold=${threshold}`);
+            const data = await resp.json();
+
+            cycleNum++;
+            totalScanned += data.total_fetched;
+
+            // Check for new critical alerts
+            const prevIds = new Set(allAlerts.map(a => a.uid));
+            let hasBreaking = false;
+
+            data.alerts.forEach(a => {
+                if (!prevIds.has(a.uid)) {
+                    allAlerts.unshift(a);
+                    if (a.score >= 70) hasBreaking = true;
+                    else if (a.score >= 50) playAlertSound();
+                }
+            });
+
+            if (hasBreaking) {
+                playBreakingSound();
+                const flash = document.getElementById('breakingFlash');
+                flash.classList.add('active');
+                setTimeout(() => flash.classList.remove('active'), 5000);
+
+                // Browser notification
+                if (Notification.permission === 'granted') {
+                    const top = data.alerts[0];
+                    new Notification('BREAKING: Middle East Alert', { body: top.title });
+                }
+            }
+
+            // Update status
+            document.getElementById('totalAlerts').textContent = allAlerts.length;
+            document.getElementById('totalScanned').textContent = totalScanned;
+            document.getElementById('cycleNum').textContent = cycleNum;
+            document.getElementById('lastUpdate').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+
+            renderAlerts();
+        } catch (e) {
+            console.error('Scan failed:', e);
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = 'Scan Now';
+    }
+
+    function toggleAuto() {
+        const btn = document.getElementById('autoBtn');
+        if (autoInterval) {
+            clearInterval(autoInterval);
+            autoInterval = null;
+            btn.textContent = 'Auto: OFF';
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-secondary');
+            document.getElementById('pulseDot').style.background = '#ff2a2a';
+        } else {
+            fetchNow();
+            autoInterval = setInterval(fetchNow, 120000); // every 2 min
+            btn.textContent = 'Auto: ON';
+            btn.classList.remove('btn-secondary');
+            btn.classList.add('btn-primary');
+            document.getElementById('pulseDot').style.background = '#00ff44';
+        }
+    }
+
+    document.getElementById('filter').addEventListener('change', renderAlerts);
+
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+</script>
+
+</body>
+</html>
