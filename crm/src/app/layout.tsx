@@ -1,40 +1,22 @@
-import type { Metadata, Viewport } from 'next'
-import './globals.css'
-import BottomNav from '@/components/layout/bottom-nav'
+import type { Metadata } from "next";
+import { AuthProvider } from "@/components/auth-provider";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'Recover Together',
-  description: 'Your personal recovery companion — meetings, tools, and community support',
-  manifest: '/manifest.json',
-}
-
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
-  themeColor: '#0F4C5C',
-}
+  title: "CRM Hub - AI-Powered CRM & Ad Manager",
+  description: "Comprehensive CRM with integrated multi-platform ad management, social media studio, and AI-powered lead generation.",
+};
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en">
-      <body className="font-sans antialiased">
-        <main className="min-h-screen bg-background">
-          {children}
-        </main>
-        <BottomNav />
-        <script dangerouslySetInnerHTML={{ __html: `
-          if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-              navigator.serviceWorker.register('/sw.js').catch(() => {});
-            });
-          }
-        `}} />
+    <html lang="en" className="h-full antialiased">
+      <body className="min-h-full flex flex-col font-sans">
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
-  )
+  );
 }
