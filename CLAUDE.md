@@ -1,15 +1,21 @@
-# CLAUDE.md
+# Robert's Claude Skills Library
 
-This repository is for learning AI concepts and building AI-related projects.
+Personal collection of Claude Code skills for business automation, marketing, and design.
 
-## Repository Structure
+## Skill Categories
 
-- This is a learning-focused repository
-- Keep code examples clear and well-documented
+### Business (`/business/*`)
+- **crm-hub** — Lead generation, customer management workflows
+- **ads-audit** — Ad campaign analysis (Google, Meta, LinkedIn, TikTok, YouTube, Apple, Microsoft)
+- **marketing** — SEO, email sequences, CRO, content strategy, pricing, referral programs
 
-## Guidelines
+### Design (`/design/*`)
+- **ui-ux-pro-max** — UI/UX design, branding, design systems, slides, banners
 
-- Write clean, readable code with clear variable names
-- Include comments explaining AI/ML concepts where helpful
-- Prefer simple implementations over complex abstractions
-- Add tests for any utility functions
+### Tools (`/tools/*`)
+- **website-cloner** — Analyze and replicate website designs
+- **explain** — Explain code in beginner-friendly terms
+
+## Usage
+
+These skills are available when working in any project. Type `/skill-name` to activate.
