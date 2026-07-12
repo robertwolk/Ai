@@ -16,6 +16,7 @@ Personal collection of Claude Code skills for business automation, marketing, an
 ### Tools (`/tools/*`)
 - **website-cloner** — Analyze and replicate website designs
 - **explain** — Explain code in beginner-friendly terms
+- **image-render** — Generate photorealistic images (interior renders, product shots) via Google's Gemini image API (needs a free `GEMINI_API_KEY`)
 
 ## Usage
 
