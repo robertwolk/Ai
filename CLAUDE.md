@@ -11,6 +11,7 @@ Personal collection of Claude Code skills for business automation, marketing, an
 
 ### Design (`/design/*`)
 - **ui-ux-pro-max** — UI/UX design, branding, design systems, slides, banners
+- **room-design** — Interior design workflow: intake dimensions, style options, to-scale renders, contractor scope
 
 ### Tools (`/tools/*`)
 - **website-cloner** — Analyze and replicate website designs
