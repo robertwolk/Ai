@@ -55,6 +55,44 @@ materials and finishes; state one camera position. Example skeleton:
 For a consistent set, keep every clause identical across shots and change only the
 camera line. Pass the same `--ref` layout image each time for placement fidelity.
 
+## Dimension-accurate renders (reskin a to-scale model) — PREFERRED for rooms
+
+Text-to-image will not honor exact dimensions (a "10×14 ft" room comes out generically
+spacious). When proportions matter, don't describe the geometry — **hand it to the image
+model as a picture**. Screenshot a to-scale 3D model and have Gemini reskin it: the
+structure (room shape, furniture placement, camera) is preserved, and the model only
+applies real materials and light.
+
+Workflow:
+
+1. **Build/obtain a to-scale model.** The `room-design` skill's interactive walk-through
+   is built to the real dimensions — use it, or any HTML/CSS-3D scene at true scale.
+2. **Capture the view** with the screenshot helper (hides UI chrome, can jump to a
+   preset camera):
+   ```
+   NODE_PATH=$(npm root -g) node scripts/screenshot.js \
+     --html /path/to/walkthrough.html --out ref.png \
+     --selector "#vp" --hide ".hint,.compass" --wait 2200 \
+     [--click "text=Foot of bed"]
+   ```
+   (Requires Playwright + Chromium — pre-installed in Claude Code web environments.)
+3. **Reskin it** — pass the screenshot as `--ref` with a prompt that says *keep the exact
+   proportions/camera/placement* and only changes materials:
+   ```
+   python3 scripts/generate.py --ref ref.png --out render.png --prompt \
+   "Convert this 3D room-layout screenshot into a PHOTOREALISTIC interior photograph.
+    CRITICAL: keep the EXACT room proportions, camera viewpoint and furniture placement
+    of the reference; do NOT widen or enlarge the room. Reskin with real materials:
+    [walls / floor / furniture finishes]. Natural daylight, ultra-detailed. Ignore any
+    on-screen text or icons."
+   ```
+4. To change one wall/finish (e.g. "paint the east wall, remove the curtains"), re-run
+   step 3 against the **same** `ref.png` with the one change stated — the geometry stays
+   put because the reference is unchanged.
+
+This is the preferred path for room renders: it fixes the "dimensions are wrong" problem
+that plain text prompting can't.
+
 ## Honest limits
 
 - This produces **still images**, not a navigable walk-through video. For video, render
